@@ -97,13 +97,13 @@ class SchoolBellApp:
         # 🔁 load_audio_files() dipanggil SETELAH play_button didefinisikan
         self.load_audio_files()
 
-        # Analog Clock - Pindahkan ke pojok kiri atas, tidak tumpang tindih
+        # Analog Clock - Posisi di pojok kiri atas, tidak tumpang tindih
         clock_frame = tk.Frame(self.root)
         clock_frame.place(x=10, y=10)  # Atur posisi manual
         self.clock = ClockFace(clock_frame)
         self.clock.pack()
 
-        # Table Frame - Tabel dengan header hari
+        # Table Frame - Tabel dengan header hari (seperti Screenshot_3.png)
         table_frame = tk.Frame(self.root)
         table_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
