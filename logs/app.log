@@ -1,0 +1,128 @@
+2025-07-29 13:05:33 - root - INFO     - log_info:21 - Database diinisialisasi
+2025-07-29 13:05:33 - root - INFO     - log_info:21 - Database kosong
+2025-07-29 13:05:33 - root - INFO     - log_info:21 - Melakukan git pull untuk update audio...
+2025-07-29 13:05:34 - root - INFO     - log_info:21 - Audio diperbarui.
+2025-07-29 13:05:34 - root - INFO     - log_info:21 - Data dummy ditambahkan
+2025-07-29 13:05:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'IHDR' 16 13
+2025-07-29 13:05:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'cHRM' 41 32
+2025-07-29 13:05:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'bKGD' 85 6
+2025-07-29 13:05:36 - PIL.PngImagePlugin - DEBUG    - _open:781 - b'bKGD' 85 6 (unknown)
+2025-07-29 13:05:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'tIME' 103 7
+2025-07-29 13:05:36 - PIL.PngImagePlugin - DEBUG    - _open:781 - b'tIME' 103 7 (unknown)
+2025-07-29 13:05:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'orNT' 122 1
+2025-07-29 13:05:36 - PIL.PngImagePlugin - DEBUG    - _open:781 - b'orNT' 122 1 (unknown)
+2025-07-29 13:05:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'IDAT' 135 32768
+2025-07-29 13:05:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'tEXt' 167167 37
+2025-07-29 13:05:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'tEXt' 167216 37
+2025-07-29 13:05:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'tEXt' 167265 40
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing AvifImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing BlpImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing BmpImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing BufrStubImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing CurImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing DcxImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing DdsImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing EpsImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing FitsImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing FliImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing FpxImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:402 - Image: failed to import FpxImagePlugin: No module named 'olefile'
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing FtexImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing GbrImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing GifImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing GribStubImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing Hdf5StubImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing IcnsImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing IcoImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing ImImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing ImtImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing IptcImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing JpegImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing Jpeg2KImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing McIdasImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing MicImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:402 - Image: failed to import MicImagePlugin: No module named 'olefile'
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing MpegImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing MpoImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing MspImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing PalmImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing PcdImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing PcxImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing PdfImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing PixarImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing PngImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing PpmImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing PsdImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing QoiImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing SgiImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing SpiderImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing SunImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing TgaImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing TiffImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing WebPImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing WmfImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing XbmImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing XpmImagePlugin
+2025-07-29 13:05:36 - PIL.Image - DEBUG    - init:399 - Importing XVThumbImagePlugin
+2025-07-29 13:15:35 - root - INFO     - log_info:21 - Database diinisialisasi
+2025-07-29 13:15:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'IHDR' 16 13
+2025-07-29 13:15:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'cHRM' 41 32
+2025-07-29 13:15:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'bKGD' 85 6
+2025-07-29 13:15:36 - PIL.PngImagePlugin - DEBUG    - _open:781 - b'bKGD' 85 6 (unknown)
+2025-07-29 13:15:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'tIME' 103 7
+2025-07-29 13:15:36 - PIL.PngImagePlugin - DEBUG    - _open:781 - b'tIME' 103 7 (unknown)
+2025-07-29 13:15:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'orNT' 122 1
+2025-07-29 13:15:36 - PIL.PngImagePlugin - DEBUG    - _open:781 - b'orNT' 122 1 (unknown)
+2025-07-29 13:15:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'IDAT' 135 32768
+2025-07-29 13:15:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'tEXt' 167167 37
+2025-07-29 13:15:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'tEXt' 167216 37
+2025-07-29 13:15:36 - PIL.PngImagePlugin - DEBUG    - call:201 - STREAM b'tEXt' 167265 40
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing AvifImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing BlpImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing BmpImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing BufrStubImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing CurImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing DcxImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing DdsImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing EpsImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing FitsImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing FliImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing FpxImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:402 - Image: failed to import FpxImagePlugin: No module named 'olefile'
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing FtexImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing GbrImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing GifImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing GribStubImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing Hdf5StubImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing IcnsImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing IcoImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing ImImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing ImtImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing IptcImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing JpegImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing Jpeg2KImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing McIdasImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing MicImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:402 - Image: failed to import MicImagePlugin: No module named 'olefile'
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing MpegImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing MpoImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing MspImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing PalmImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing PcdImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing PcxImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing PdfImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing PixarImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing PngImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing PpmImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing PsdImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing QoiImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing SgiImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing SpiderImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing SunImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing TgaImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing TiffImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing WebPImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing WmfImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing XbmImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing XpmImagePlugin
+2025-07-29 13:15:36 - PIL.Image - DEBUG    - init:399 - Importing XVThumbImagePlugin
