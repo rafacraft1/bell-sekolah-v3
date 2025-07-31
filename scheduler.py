@@ -1,78 +1,55 @@
 # scheduler.py
 import threading
-import pygame
 import datetime
-import os
-import time
-from data_manager import get_schedules
-from logger import log_error
+import time as time_module  # Import dengan alias untuk menghindari konflik
+import sys
+from data_manager import data_manager
+from audio_player import AudioPlayer
+from logger import log_error, log_info
+from utils import show_notification
+from constants import DAYS, SCHEDULE_CHECK_INTERVAL
 
 class BellScheduler:
-    def __init__(self):
+    def __init__(self, audio_player=None):
         self.running = True
+        self.audio_player = audio_player or AudioPlayer()
+        self.last_played = {}  # Track last played time to avoid repeats
         self.thread = threading.Thread(target=self._run, daemon=True)
         self.thread.start()
+        log_info("Scheduler diinisialisasi")
 
-    def _run(self):
+    def _run(self) -> None:
+        """Main scheduler loop"""
         while self.running:
-            now = datetime.datetime.now()
-            # Hanya Senin-Sabtu
-            if now.weekday() < 6:
-                day_name = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][now.weekday()]
-                time_str = now.strftime("%H:%M")
-                schedules = get_schedules().get(day_name, [])
-                for time_val, path in schedules:
-                    if time_val == time_str:
-                        self._play_audio(path)
-                        break
-            time.sleep(30)  # Cek tiap 30 detik
-
-    def _play_audio(self, path):
-        try:
-            if not os.path.exists(path):
-                log_error(f"File audio tidak ditemukan: {path}")
-                return
-
-            # Selalu inisialisasi ulang mixer
-            if pygame.mixer.get_init():
-                pygame.mixer.quit()
-            pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
-
-            pygame.mixer.music.load(path)
-            pygame.mixer.music.play()
-
-            # Tunggu sampai selesai
-            while pygame.mixer.music.get_busy():
-                time.sleep(0.1)
-
-            pygame.mixer.quit()
-
-        except Exception as e:
-            log_error(f"Gagal memutar audio {path}: {e}")
-
-    def play_test_sound(self, path):
-        """Fungsi untuk memutar suara uji (opsional)"""
-        try:
-            if not os.path.exists(path):
-                log_error(f"File audio tidak ditemukan: {path}")
-                return
-
-            if pygame.mixer.get_init():
-                pygame.mixer.quit()
-            pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
-
-            pygame.mixer.music.load(path)
-            pygame.mixer.music.play()
-
-            while pygame.mixer.music.get_busy():
-                time.sleep(0.1)
-
-            pygame.mixer.quit()
-
-        except Exception as e:
-            log_error(f"Gagal memutar audio {path}: {e}")
-
-    def stop(self):
+            try:
+                now = datetime.datetime.now()
+                # Hanya Senin-Sabtu (0-5)
+                if now.weekday() < 6:
+                    day_name = DAYS[now.weekday()]
+                    current_time_str = now.strftime("%H:%M")  # Gunakan nama variabel yang berbeda
+                    
+                    # Check if we've already played a bell for this time
+                    last_key = f"{day_name}_{current_time_str}"
+                    if last_key not in self.last_played or \
+                       (now - self.last_played[last_key]).total_seconds() > 60:
+                        
+                        schedules = data_manager.get_schedules().get(day_name, [])
+                        for schedule_time, path in schedules:  # Gunakan nama variabel yang berbeda
+                            if schedule_time == current_time_str:
+                                # Tampilkan notifikasi
+                                show_notification(f"Bell Sekolah", f"Memutar bell untuk {day_name} pukul {schedule_time}")
+                                
+                                # Putar audio
+                                self.audio_player.play_audio(path)
+                                self.last_played[last_key] = now
+                                break
+                
+                time_module.sleep(SCHEDULE_CHECK_INTERVAL)  # Gunakan alias modul
+            except Exception as e:
+                log_error(f"Error di scheduler: {e}")
+                time_module.sleep(SCHEDULE_CHECK_INTERVAL)  # Gunakan alias modul
+    
+    def stop(self) -> None:
+        """Stop scheduler"""
         self.running = False
-        if pygame.mixer.get_init():
-            pygame.mixer.quit()
+        log_info("Scheduler dihentikan")
