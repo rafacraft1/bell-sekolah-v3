@@ -85,7 +85,7 @@ class TrayIcon:
         except Exception as e:
             log_error(f"Gagal toggle autostart: {e}")
 
-    def is_autostart_enabled(self) -> bool:
+    def is_autostart_enabled(self):
         """Check if autostart is enabled"""
         try:
             if sys.platform == 'win32':
@@ -96,7 +96,7 @@ class TrayIcon:
                 try:
                     reg.OpenKey(key, sub_key + "\\" + app_name)
                     return True
-                except WindowsError:
+                except:
                     return False
             elif sys.platform.startswith('linux'):
                 autostart_file = os.path.expanduser("~/.config/autostart/bell-sekolah.desktop")
@@ -110,10 +110,8 @@ class TrayIcon:
         """Quit application"""
         try:
             self.app.quit_app()
+            if self.icon:
+                self.icon.stop()
         except Exception as e:
-            log_error(f"Gagal keluar aplikasi: {e}")
-
-    def stop(self):
-        """Stop tray icon"""
-        if self.icon:
-            self.icon.stop()
+            log_error(f"Gagal keluar: {e}")
+            sys.exit(1)

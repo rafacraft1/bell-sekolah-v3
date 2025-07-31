@@ -45,19 +45,72 @@ class ScheduleTable(tk.Frame):
         self._setup_table()
 
     def _setup_table(self):
-        # Header dengan nama hari
-        for col, day in enumerate(DAYS):
-            tk.Label(self, text=day, relief="groove", width=15, bg="lightgray", 
-                     font=("Arial", 10, "bold")).grid(row=0, column=col, sticky="nsew")
-
-        # Grid jadwal
+        # Konfigurasi grid agar responsive
+        for col in range(len(DAYS)):
+            self.grid_columnconfigure(col, weight=1, uniform="schedule_cols")
+        
+        for row in range(self.rows):
+            self.grid_rowconfigure(row, weight=1, uniform="schedule_rows")
+        
+        # Grid jadwal dengan styling yang lebih baik
         for row in range(self.rows):
             row_entries = []
             for col in range(len(DAYS)):
-                entry = tk.Entry(self, width=15, relief="groove", bg="lightgreen")
-                entry.grid(row=row+1, column=col, sticky="nsew")
+                # Alternate row colors for better readability
+                bg_color = "#f8f9fa" if row % 2 == 0 else "#e9ecef"
+                
+                entry = tk.Entry(
+                    self, 
+                    width=15, 
+                    relief="flat", 
+                    bg=bg_color,
+                    font=("Arial", 9),
+                    highlightthickness=1,
+                    highlightbackground="#dee2e6",
+                    highlightcolor="#adb5bd",
+                    selectbackground="#3498db",
+                    selectforeground="white"
+                )
+                entry.grid(row=row, column=col, sticky="nsew", padx=1, pady=1)
                 row_entries.append(entry)
             self.entries.append(row_entries)
+
+    def update_font_size(self, base_size):
+        """Update font size untuk semua entries"""
+        for row_entries in self.entries:
+            for entry in row_entries:
+                current_font = entry.cget("font")
+                if isinstance(current_font, tuple):
+                    font_family = current_font[0]
+                    new_font = (font_family, base_size)
+                else:
+                    new_font = ("Arial", base_size)
+                entry.config(font=new_font)
+
+    def get_content_width(self):
+        """Hitung lebar konten tabel"""
+        if not self.entries:
+            return len(DAYS) * 120  # Default width per column
+        
+        # Hitung lebar berdasarkan jumlah kolom dan lebar entry
+        total_width = 0
+        if self.entries[0]:
+            # Gunakan lebar minimum yang wajar per kolom
+            min_col_width = 120  # Minimum lebar per kolom
+            total_width = len(DAYS) * min_col_width
+        
+        return max(total_width, len(DAYS) * 120)  # Minimum 120px per kolom
+
+    def get_content_height(self):
+        """Hitung tinggi konten tabel"""
+        if not self.entries:
+            return self.rows * 30  # Default tinggi per baris
+        
+        # Hitung tinggi berdasarkan jumlah baris
+        row_height = 30  # Tinggi per baris
+        total_height = self.rows * row_height
+        
+        return max(total_height, self.rows * 30)  # Minimum 30px per baris
 
     def clear(self):
         """Clear all entries"""
@@ -82,18 +135,22 @@ class ScheduleTable(tk.Frame):
 
 
 class StatusBar(tk.Frame):
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, bg_color="#2c3e50", fg_color="white", **kwargs):
         super().__init__(parent, **kwargs)
+        self.configure(bg=bg_color)
+        
         self.time_label = tk.Label(
             self,
             text="",
-            relief="sunken",
+            relief="flat",
             anchor="e",
-            font=("Courier", 9),
-            bg="lightgray",
-            fg="black"
+            font=("Courier", 10),
+            bg=bg_color,
+            fg=fg_color,
+            padx=15,
+            pady=8
         )
-        self.time_label.pack(side="bottom", fill="x", padx=1, pady=1)
+        self.time_label.pack(side="bottom", fill="x")
         self.update_time()
 
     def update_time(self):

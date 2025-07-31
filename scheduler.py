@@ -1,7 +1,7 @@
 # scheduler.py
 import threading
 import datetime
-import time as time_module  # Import dengan alias untuk menghindari konflik
+import time as time_module
 import sys
 from data_manager import data_manager
 from audio_player import AudioPlayer
@@ -26,7 +26,7 @@ class BellScheduler:
                 # Hanya Senin-Sabtu (0-5)
                 if now.weekday() < 6:
                     day_name = DAYS[now.weekday()]
-                    current_time_str = now.strftime("%H:%M")  # Gunakan nama variabel yang berbeda
+                    current_time_str = now.strftime("%H:%M")
                     
                     # Check if we've already played a bell for this time
                     last_key = f"{day_name}_{current_time_str}"
@@ -34,7 +34,7 @@ class BellScheduler:
                        (now - self.last_played[last_key]).total_seconds() > 60:
                         
                         schedules = data_manager.get_schedules().get(day_name, [])
-                        for schedule_time, path in schedules:  # Gunakan nama variabel yang berbeda
+                        for schedule_time, path in schedules:
                             if schedule_time == current_time_str:
                                 # Tampilkan notifikasi
                                 show_notification(f"Bell Sekolah", f"Memutar bell untuk {day_name} pukul {schedule_time}")
@@ -44,10 +44,10 @@ class BellScheduler:
                                 self.last_played[last_key] = now
                                 break
                 
-                time_module.sleep(SCHEDULE_CHECK_INTERVAL)  # Gunakan alias modul
+                time_module.sleep(SCHEDULE_CHECK_INTERVAL)
             except Exception as e:
                 log_error(f"Error di scheduler: {e}")
-                time_module.sleep(SCHEDULE_CHECK_INTERVAL)  # Gunakan alias modul
+                time_module.sleep(SCHEDULE_CHECK_INTERVAL)
     
     def stop(self) -> None:
         """Stop scheduler"""

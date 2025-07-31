@@ -16,12 +16,27 @@ class SchoolBellApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Bell Sekolah Otomatis")
-        self.root.geometry("800x600")
-        self.root.resizable(False, False)
+        self.root.geometry("960x600")
+        self.root.resizable(True, True)  # Allow window resizing
+        self.root.minsize(1000, 650)  # Set minimum window size untuk responsivitas
+        
+        # Set theme colors
+        self.bg_color = "#f5f6fa"
+        self.primary_color = "#2c3e50"
+        self.secondary_color = "#3498db"
+        self.success_color = "#27ae60"
+        self.warning_color = "#f39c12"
+        self.danger_color = "#e74c3c"
+        self.info_color = "#9b59b6"
+        self.text_color = "#2c3e50"
+        self.white_color = "#ffffff"
+        
+        # Configure root background
+        self.root.configure(bg=self.bg_color)
         
         # Variables
-        self.audio_path = tk.StringVar()         # Path lengkap (internal)
-        self.path_display_var = tk.StringVar()   # Hanya nama file (tampilan)
+        self.audio_path = tk.StringVar()
+        self.path_display_var = tk.StringVar()
         
         # Audio player
         self.audio_player = AudioPlayer()
@@ -37,63 +52,269 @@ class SchoolBellApp:
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def _setup_ui(self):
-        # Header
-        tk.Label(self.root, text="Bell Sekolah Otomatis", font=("Arial", 16, "bold")).pack(pady=10)
+        # Header with gradient effect
+        header_frame = tk.Frame(self.root, bg=self.primary_color, height=70)
+        header_frame.pack(fill="x")
+        header_frame.pack_propagate(False)
+        
+        # Logo and title
+        logo_frame = tk.Frame(header_frame, bg=self.primary_color)
+        logo_frame.pack(side="left", padx=20, pady=10)
+        
+        # Add bell icon if available
+        try:
+            bell_icon_path = resource_path(os.path.join(ASSETS_DIR, BELL_ICON))
+            if os.path.exists(bell_icon_path):
+                from PIL import Image, ImageTk
+                bell_img = Image.open(bell_icon_path)
+                bell_img = bell_img.resize((40, 40), Image.LANCZOS)
+                bell_photo = ImageTk.PhotoImage(bell_img)
+                bell_label = tk.Label(logo_frame, image=bell_photo, bg=self.primary_color)
+                bell_label.image = bell_photo
+                bell_label.pack(side="left", padx=(0, 10))
+        except:
+            pass
+        
+        title_label = tk.Label(
+            logo_frame, 
+            text="Bell Sekolah Otomatis", 
+            font=("Arial", 20, "bold"),
+            bg=self.primary_color,
+            fg=self.white_color
+        )
+        title_label.pack(side="left", pady=15)
+        
+        # Version label
+        version_label = tk.Label(
+            header_frame,
+            text="v2.0.0",
+            font=("Arial", 10),
+            bg=self.primary_color,
+            fg="#ecf0f1"
+        )
+        version_label.pack(side="right", padx=20, pady=15)
 
-        # Input Frame
-        input_frame = tk.Frame(self.root)
-        input_frame.pack(pady=10)
-
-        tk.Label(input_frame, text="Hari:").grid(row=0, column=0, padx=5)
+        # Main container
+        main_container = tk.Frame(self.root, bg=self.bg_color)
+        main_container.pack(fill="both", expand=True, padx=15, pady=10)
+        
+        # Top section - Input and Clock side by side
+        top_section = tk.Frame(main_container, bg=self.bg_color)
+        top_section.pack(fill="x", pady=(0, 15))
+        
+        # Left panel - Input section with card design
+        input_card = tk.Frame(top_section, bg=self.white_color, relief="flat", bd=0)
+        input_card.pack(side="left", fill="both", expand=True, padx=(0, 15))
+        
+        # Card header
+        card_header = tk.Frame(input_card, bg=self.primary_color, height=40)
+        card_header.pack(fill="x")
+        card_header.pack_propagate(False)
+        
+        tk.Label(
+            card_header,
+            text="Pengaturan Jadwal",
+            font=("Arial", 12, "bold"),
+            bg=self.primary_color,
+            fg=self.white_color,
+            padx=15,
+            pady=8
+        ).pack(side="left")
+        
+        # Card content
+        card_content = tk.Frame(input_card, bg=self.white_color, padx=20, pady=15)
+        card_content.pack(fill="x")
+        
+        # Input fields in two rows
+        # Row 1
+        row1 = tk.Frame(card_content, bg=self.white_color)
+        row1.pack(fill="x", pady=(0, 10))
+        
+        tk.Label(row1, text="Hari:", font=("Arial", 10), bg=self.white_color, fg=self.text_color).grid(row=0, column=0, sticky="w", padx=(0, 5))
+        
         self.day_var = tk.StringVar(value="Senin")
-        day_cb = ttk.Combobox(input_frame, textvariable=self.day_var,
-                              values=DAYS, state="readonly", width=10)
-        day_cb.grid(row=0, column=1, padx=5)
-
-        tk.Label(input_frame, text="Jam:").grid(row=0, column=2, padx=5)
+        day_cb = ttk.Combobox(row1, textvariable=self.day_var, values=DAYS, state="readonly", width=12, font=("Arial", 10))
+        day_cb.grid(row=0, column=1, padx=(0, 20))
+        
+        tk.Label(row1, text="Jam:", font=("Arial", 10), bg=self.white_color, fg=self.text_color).grid(row=0, column=2, sticky="w", padx=(0, 5))
+        
         self.time_var = tk.StringVar(value="06:10")
-        tk.Entry(input_frame, textvariable=self.time_var, width=8).grid(row=0, column=3, padx=5)
-
-        # Label Pilih dari Daftar
-        tk.Label(input_frame, text="Pilih dari Daftar:").grid(row=0, column=4, padx=5)
-
-        # Combobox untuk file audio di folder audio/
-        self.mp3_combobox = ttk.Combobox(input_frame, width=30, state="readonly")
-        self.mp3_combobox.grid(row=0, column=5, padx=5)
+        time_entry = tk.Entry(row1, textvariable=self.time_var, width=10, font=("Arial", 10))
+        time_entry.grid(row=0, column=3, padx=(0, 20))
+        
+        tk.Label(row1, text="Audio:", font=("Arial", 10), bg=self.white_color, fg=self.text_color).grid(row=0, column=4, sticky="w", padx=(0, 5))
+        
+        self.mp3_combobox = ttk.Combobox(row1, width=35, state="readonly", font=("Arial", 10))
+        self.mp3_combobox.grid(row=0, column=5, padx=(0, 10))
         self.mp3_combobox.bind("<<ComboboxSelected>>", self.on_combobox_select)
-
-        # Tombol Upload Audio
-        tk.Button(input_frame, text="📁 Upload Audio", command=self.upload_audio).grid(row=0, column=6, padx=5)
-
-        # Tombol Play
-        self.play_button = tk.Button(input_frame, text="▶ Play", command=self.play_audio, state="disabled")
-        self.play_button.grid(row=0, column=7, padx=5)
-
-        # Tambah
-        tk.Button(input_frame, text="Tambah", command=self.add_schedule).grid(row=0, column=8, padx=5)
-
-        # Analog Clock - Posisi di pojok kiri atas
-        clock_frame = tk.Frame(self.root)
-        clock_frame.place(x=10, y=10)
+        
+        # Row 2 - Buttons
+        row2 = tk.Frame(card_content, bg=self.white_color)
+        row2.pack(fill="x")
+        
+        # Create styled buttons
+        self.upload_btn = self._create_styled_button(
+            row2, "📁 Upload Audio", self.secondary_color, self.upload_audio
+        )
+        self.upload_btn.pack(side="left", padx=(0, 10))
+        
+        self.play_button = self._create_styled_button(
+            row2, "▶ Play", self.success_color, self.play_audio, state="disabled"
+        )
+        self.play_button.pack(side="left", padx=(0, 10))
+        
+        self.add_btn = self._create_styled_button(
+            row2, "Tambah Jadwal", self.danger_color, self.add_schedule
+        )
+        self.add_btn.pack(side="left")
+        
+        # Right panel - Clock (no background card)
+        clock_frame = tk.Frame(top_section, bg=self.bg_color, width=180, height=180)
+        clock_frame.pack(side="right", fill="none")
+        clock_frame.pack_propagate(False)
+        
+        # Clock centered in frame
         self.clock = ClockFace(clock_frame)
-        self.clock.pack()
-
-        # Table Frame - Tabel dengan header hari
-        table_frame = tk.Frame(self.root)
-        table_frame.pack(fill="both", expand=True, padx=20, pady=10)
-
-        self.schedule_table = ScheduleTable(table_frame, rows=10)
+        self.clock.place(relx=0.5, rely=0.5, anchor="center")
+        
+        # Bottom section - Schedule table
+        schedule_section = tk.Frame(main_container, bg=self.white_color)
+        schedule_section.pack(fill="both", expand=True)
+        
+        # Table header
+        table_header = tk.Frame(schedule_section, bg=self.primary_color, height=40)
+        table_header.pack(fill="x")
+        table_header.pack_propagate(False)
+        
+        # Konfigurasi grid header agar responsive
+        for col in range(len(DAYS)):
+            table_header.grid_columnconfigure(col, weight=1, uniform="header_cols")
+        
+        for col, day in enumerate(DAYS):
+            day_label = tk.Label(
+                table_header,
+                text=day,
+                font=("Arial", 11, "bold"),
+                bg=self.primary_color,
+                fg=self.white_color,
+                width=15,
+                relief="flat"
+            )
+            day_label.grid(row=0, column=col, sticky="nsew", padx=1)
+        
+        # Simpan referensi ke header labels untuk update responsivitas
+        self.header_labels = []
+        for col, day in enumerate(DAYS):
+            for widget in table_header.grid_slaves(row=0, column=col):
+                if isinstance(widget, tk.Label):
+                    self.header_labels.append(widget)
+        
+        # Create scrollable frame for schedule table
+        scrollable_frame = tk.Frame(schedule_section, bg="white")
+        scrollable_frame.pack(fill="both", expand=True)
+        scrollable_frame.grid_rowconfigure(0, weight=1)
+        scrollable_frame.grid_columnconfigure(0, weight=1)
+        scrollable_frame.grid_rowconfigure(1, weight=0)  # Row untuk horizontal scrollbar
+        scrollable_frame.grid_columnconfigure(1, weight=0)  # Column untuk vertical scrollbar
+        
+        # Create canvas and scrollbars
+        self.canvas = tk.Canvas(scrollable_frame, highlightthickness=0, bg="white", takefocus=True)
+        scrollbar_v = tk.Scrollbar(scrollable_frame, orient="vertical", command=self.canvas.yview)
+        scrollbar_h = tk.Scrollbar(scrollable_frame, orient="horizontal", command=self.canvas.xview)
+        
+        # Configure canvas
+        self.canvas.configure(yscrollcommand=scrollbar_v.set, xscrollcommand=scrollbar_h.set)
+        
+        # Pack canvas and scrollbars
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar_v.grid(row=0, column=1, sticky="ns")
+        scrollbar_h.grid(row=1, column=0, sticky="ew")
+        
+        # Create frame inside canvas for schedule table
+        self.table_container = tk.Frame(self.canvas, bg="white")
+        self.canvas_window = self.canvas.create_window((0, 0), window=self.table_container, anchor="nw")
+        
+        # Schedule table
+        self.schedule_table = ScheduleTable(self.table_container, rows=10)
         self.schedule_table.pack(fill="both", expand=True)
-
-        # Buttons
-        btn_frame = tk.Frame(self.root)
-        btn_frame.pack(pady=5)
-        tk.Button(btn_frame, text="Hapus Jadwal Hari Ini", command=self.clear_day).pack(side="left", padx=5)
-        tk.Button(btn_frame, text="Muat Ulang", command=self.load_schedule).pack(side="left", padx=5)
-
-        # Status Bar
-        self.status_bar = StatusBar(self.root)
+        
+        # Bind events for scrolling
+        self.table_container.bind("<Configure>", self._on_frame_configure)
+        self.canvas.bind("<Configure>", self._on_canvas_configure)
+        self.canvas.bind("<MouseWheel>", self._on_mousewheel)  # Windows
+        self.canvas.bind("<Button-4>", lambda e: self.canvas.yview_scroll(-1, "units"))  # Linux
+        self.canvas.bind("<Button-5>", lambda e: self.canvas.yview_scroll(1, "units"))   # Linux
+        
+        # Enable canvas to receive focus for keyboard navigation
+        self.canvas.focus_set()
+        
+        # Action buttons
+        action_frame = tk.Frame(main_container, bg=self.bg_color)
+        action_frame.pack(fill="x", pady=(10, 0))
+        
+        self.clear_btn = self._create_styled_button(
+            action_frame, "Hapus Jadwal Hari Ini", self.warning_color, self.clear_day
+        )
+        self.clear_btn.pack(side="left", padx=(0, 10))
+        
+        self.refresh_btn = self._create_styled_button(
+            action_frame, "Muat Ulang", self.info_color, self.load_schedule
+        )
+        self.refresh_btn.pack(side="left")
+        
+        # Status bar
+        self.status_bar = StatusBar(self.root, self.primary_color, self.white_color)
         self.status_bar.pack(side="bottom", fill="x")
+        
+        # Setup window resize handler untuk responsivitas
+        self._setup_window_resize_handler()
+        
+        # Setup keyboard navigation untuk scrolling
+        self._setup_keyboard_navigation()
+
+    def _create_styled_button(self, parent, text, color, command, state="normal"):
+        """Create a styled button with hover effect"""
+        btn = tk.Button(
+            parent,
+            text=text,
+            bg=color,
+            fg=self.white_color,
+            font=("Arial", 10, "bold"),
+            relief="flat",
+            bd=0,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            state=state,
+            command=command
+        )
+        
+        # Add hover effect
+        def on_enter(e):
+            btn.config(bg=self._darken_color(color))
+            
+        def on_leave(e):
+            btn.config(bg=color)
+            
+        btn.bind("<Enter>", on_enter)
+        btn.bind("<Leave>", on_leave)
+        
+        return btn
+    
+    def _darken_color(self, color):
+        """Darken a hex color by 20%"""
+        # Convert hex to RGB
+        r = int(color[1:3], 16)
+        g = int(color[3:5], 16)
+        b = int(color[5:7], 16)
+        
+        # Darken by 20%
+        r = int(r * 0.8)
+        g = int(g * 0.8)
+        b = int(b * 0.8)
+        
+        # Convert back to hex
+        return f"#{r:02x}{g:02x}{b:02x}"
 
     def load_audio_files(self):
         """Muat daftar file audio dari folder audio/ ke combobox"""
@@ -276,3 +497,116 @@ class SchoolBellApp:
             self.root.destroy()
         except Exception as e:
             log_error(f"Gagal keluar aplikasi: {e}")
+
+    def _on_frame_configure(self, event):
+        """Update scrollregion saat frame berubah ukuran"""
+        try:
+            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+            # Update responsivitas
+            self._update_table_responsiveness()
+        except Exception as e:
+            log_error(f"Gagal frame configure: {e}")
+
+    def _on_canvas_configure(self, event):
+        """Update canvas window size saat canvas berubah ukuran"""
+        try:
+            # Update lebar canvas window agar sesuai dengan canvas
+            if hasattr(self, 'schedule_table'):
+                content_width = self.schedule_table.get_content_width()
+                self.canvas.itemconfig(self.canvas_window, 
+                                     width=max(content_width, event.width))
+        except Exception as e:
+            log_error(f"Gagal canvas configure: {e}")
+
+    def _on_mousewheel(self, event):
+        """Handle mouse wheel scrolling"""
+        try:
+            # Scroll vertical
+            self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        except Exception as e:
+            log_error(f"Gagal mouse wheel: {e}")
+
+    def _on_key_press(self, event):
+        """Handle key press events untuk scrolling"""
+        try:
+            if event.keysym == 'Up':
+                self.canvas.yview_scroll(-1, "units")
+            elif event.keysym == 'Down':
+                self.canvas.yview_scroll(1, "units")
+            elif event.keysym == 'Left':
+                self.canvas.xview_scroll(-1, "units")
+            elif event.keysym == 'Right':
+                self.canvas.xview_scroll(1, "units")
+            elif event.keysym == 'Page_Up':
+                self.canvas.yview_scroll(-1, "pages")
+            elif event.keysym == 'Page_Down':
+                self.canvas.yview_scroll(1, "pages")
+            elif event.keysym == 'Home':
+                self.canvas.yview_moveto(0)
+            elif event.keysym == 'End':
+                self.canvas.yview_moveto(1)
+        except Exception as e:
+            log_error(f"Gagal key press: {e}")
+
+    def _setup_keyboard_navigation(self):
+        """Setup keyboard navigation untuk scrolling"""
+        self.root.bind("<Up>", lambda e: self._on_key_press(e))
+        self.root.bind("<Down>", lambda e: self._on_key_press(e))
+        self.root.bind("<Left>", lambda e: self._on_key_press(e))
+        self.root.bind("<Right>", lambda e: self._on_key_press(e))
+        self.root.bind("<Prior>", lambda e: self._on_key_press(e))  # Page Up
+        self.root.bind("<Next>", lambda e: self._on_key_press(e))   # Page Down
+        self.root.bind("<Home>", lambda e: self._on_key_press(e))
+        self.root.bind("<End>", lambda e: self._on_key_press(e))
+        
+    def _update_table_responsiveness(self):
+        """Update tabel responsivitas berdasarkan ukuran window"""
+        try:
+            # Dapatkan ukuran canvas
+            canvas_width = self.canvas.winfo_width()
+            canvas_height = self.canvas.winfo_height()
+            
+            if canvas_width > 1 and canvas_height > 1:  # Valid size
+                # Update ukuran font berdasarkan lebar canvas
+                base_font_size = max(8, min(12, canvas_width // 100))
+                header_font_size = max(9, min(14, base_font_size + 2))
+                
+                # Update font di header labels
+                if hasattr(self, 'header_labels'):
+                    for label in self.header_labels:
+                        current_font = label.cget("font")
+                        if isinstance(current_font, tuple):
+                            font_family = current_font[0]
+                            new_font = (font_family, header_font_size, "bold")
+                        else:
+                            new_font = ("Arial", header_font_size, "bold")
+                        label.config(font=new_font)
+                
+                # Update font di schedule table
+                if hasattr(self, 'schedule_table'):
+                    self.schedule_table.update_font_size(base_font_size)
+                
+                # Update canvas window size
+                if hasattr(self, 'schedule_table'):
+                    content_width = self.schedule_table.get_content_width()
+                    content_height = self.schedule_table.get_content_height()
+                    
+                    # Update canvas window size
+                    self.canvas.itemconfig(self.canvas_window, 
+                                         width=max(content_width, canvas_width),
+                                         height=max(content_height, canvas_height))
+                    
+                    # Update scrollregion
+                    self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+                                
+        except Exception as e:
+            log_error(f"Gagal update responsivitas tabel: {e}")
+
+    def _setup_window_resize_handler(self):
+        """Setup handler untuk window resize"""
+        self.root.bind("<Configure>", self._on_window_resize)
+
+    def _on_window_resize(self, event):
+        """Handle window resize event"""
+        # Update responsivitas tabel
+        self.root.after(100, self._update_table_responsiveness)  # Delay untuk smooth update

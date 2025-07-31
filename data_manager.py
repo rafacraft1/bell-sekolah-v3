@@ -4,7 +4,7 @@ import os
 import shutil
 import subprocess
 import hashlib
-import time as time_module  # Import dengan alias
+import time as time_module
 from constants import (
     DB_NAME, DEFAULT_AUDIO_DIR, REPO_URL, DAYS, AUDIO_DIR
 )
@@ -155,7 +155,7 @@ class DataManager:
 
     def get_schedules(self, force_refresh=False) -> dict:
         """Ambil semua jadwal dengan caching"""
-        now = time_module.time()  # Gunakan alias modul
+        now = time_module.time()
         if (force_refresh or 
             self._last_cache_update is None or 
             now - self._last_cache_update > self._cache_lifetime):
@@ -168,7 +168,7 @@ class DataManager:
                 conn.close()
                 
                 schedule = {}
-                for day, schedule_time, path in rows:  # Gunakan nama variabel yang berbeda
+                for day, schedule_time, path in rows:
                     schedule.setdefault(day, []).append((schedule_time, path))
                 
                 self._schedule_cache = schedule
@@ -180,7 +180,7 @@ class DataManager:
         else:
             return self._schedule_cache
 
-    def add_schedule(self, day: str, schedule_time: str, path: str) -> bool:  # Gunakan nama variabel yang berbeda
+    def add_schedule(self, day: str, schedule_time: str, path: str) -> bool:
         """Tambah jadwal baru"""
         try:
             conn = sqlite3.connect(DB_NAME)
@@ -211,7 +211,7 @@ class DataManager:
             log_error(f"Gagal hapus jadwal hari {day}: {e}")
             return False
 
-    def delete_schedule(self, day: str, schedule_time: str, audio_path: str) -> bool:  # Gunakan nama variabel yang berbeda
+    def delete_schedule(self, day: str, schedule_time: str, audio_path: str) -> bool:
         """Hapus jadwal spesifik"""
         try:
             conn = sqlite3.connect(DB_NAME)
