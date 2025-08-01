@@ -19,9 +19,8 @@ class SchoolBellApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Bell Sekolah Otomatis")
-        self.root.geometry("960x600")
-        self.root.resizable(True, True)  # Allow window resizing
-        self.root.minsize(1000, 650)  # Set minimum window size untuk responsivitas
+        self.root.geometry("1000x650")  # Ukuran fix
+        self.root.resizable(False, False)  # Tidak bisa di-resize
         
         # Set theme colors
         self.bg_color = "#f5f6fa"
@@ -222,16 +221,23 @@ class SchoolBellApp:
         
         # Create canvas and scrollbars
         self.canvas = tk.Canvas(scrollable_frame, highlightthickness=0, bg="white", takefocus=True)
-        scrollbar_v = tk.Scrollbar(scrollable_frame, orient="vertical", command=self.canvas.yview)
-        scrollbar_h = tk.Scrollbar(scrollable_frame, orient="horizontal", command=self.canvas.xview)
+        
+        # Scrollbar vertikal dengan grid_remove untuk menyembunyikan
+        self.scrollbar_v = tk.Scrollbar(scrollable_frame, orient="vertical", command=self.canvas.yview)
+        self.scrollbar_v.grid(row=0, column=1, sticky="ns")
+        self.scrollbar_v.grid_remove()  # Sembunyikan scrollbar awalnya
+        
+        # Scrollbar horizontal dengan grid_remove untuk menyembunyikan
+        self.scrollbar_h = tk.Scrollbar(scrollable_frame, orient="horizontal", command=self.canvas.xview)
+        self.scrollbar_h.grid(row=1, column=0, sticky="ew")
+        self.scrollbar_h.grid_remove()  # Sembunyikan scrollbar awalnya
         
         # Configure canvas
-        self.canvas.configure(yscrollcommand=scrollbar_v.set, xscrollcommand=scrollbar_h.set)
+        self.canvas.configure(yscrollcommand=self._update_vertical_scrollbar, 
+                             xscrollcommand=self._update_horizontal_scrollbar)
         
-        # Pack canvas and scrollbars
+        # Pack canvas
         self.canvas.grid(row=0, column=0, sticky="nsew")
-        scrollbar_v.grid(row=0, column=1, sticky="ns")
-        scrollbar_h.grid(row=1, column=0, sticky="ew")
         
         # Create frame inside canvas for schedule table
         self.table_container = tk.Frame(self.canvas, bg="white")
@@ -268,9 +274,6 @@ class SchoolBellApp:
         # Status bar
         self.status_bar = StatusBar(self.root, self.primary_color, self.white_color)
         self.status_bar.pack(side="bottom", fill="x")
-        
-        # Setup window resize handler untuk responsivitas
-        self._setup_window_resize_handler()
         
         # Setup keyboard navigation untuk scrolling
         self._setup_keyboard_navigation()
@@ -466,6 +469,8 @@ class SchoolBellApp:
             # Force refresh data from database
             schedules = data_manager.get_schedules(force_refresh=force_refresh)
             self.schedule_table.update_schedule(schedules)
+            # Cek scrollbar setelah update
+            self.root.after(100, self._check_scrollbars)
         except Exception as e:
             log_error(f"Gagal load jadwal: {e}")
             messagebox.showerror("Error", f"Gagal memuat jadwal:\n{str(e)}")
@@ -519,6 +524,8 @@ class SchoolBellApp:
             self.canvas.configure(scrollregion=self.canvas.bbox("all"))
             # Update responsivitas
             self._update_table_responsiveness()
+            # Cek scrollbar
+            self._check_scrollbars()
         except Exception as e:
             log_error(f"Gagal frame configure: {e}")
 
@@ -530,6 +537,8 @@ class SchoolBellApp:
                 content_width = self.schedule_table.get_content_width()
                 self.canvas.itemconfig(self.canvas_window, 
                                      width=max(content_width, event.width))
+            # Cek scrollbar
+            self._check_scrollbars()
         except Exception as e:
             log_error(f"Gagal canvas configure: {e}")
 
@@ -617,14 +626,56 @@ class SchoolBellApp:
         except Exception as e:
             log_error(f"Gagal update responsivitas tabel: {e}")
 
-    def _setup_window_resize_handler(self):
-        """Setup handler untuk window resize"""
-        self.root.bind("<Configure>", self._on_window_resize)
+    def _update_vertical_scrollbar(self, first, last):
+        """Update vertikal scrollbar dan tampilkan/sembunyikan sesuai kebutuhan"""
+        # Update posisi scrollbar
+        self.scrollbar_v.set(first, last)
+        
+        # Cek apakah scrollbar diperlukan
+        if self.canvas.bbox("all"):
+            canvas_height = self.canvas.winfo_height()
+            content_height = self.canvas.bbox("all")[3]
+            
+            if content_height > canvas_height:
+                self.scrollbar_v.grid()  # Tampilkan scrollbar
+            else:
+                self.scrollbar_v.grid_remove()  # Sembunyikan scrollbar
 
-    def _on_window_resize(self, event):
-        """Handle window resize event"""
-        # Update responsivitas tabel
-        self.root.after(100, self._update_table_responsiveness)  # Delay untuk smooth update
+    def _update_horizontal_scrollbar(self, first, last):
+        """Update horizontal scrollbar dan tampilkan/sembunyikan sesuai kebutuhan"""
+        # Update posisi scrollbar
+        self.scrollbar_h.set(first, last)
+        
+        # Cek apakah scrollbar diperlukan
+        if self.canvas.bbox("all"):
+            canvas_width = self.canvas.winfo_width()
+            content_width = self.canvas.bbox("all")[2]
+            
+            if content_width > canvas_width:
+                self.scrollbar_h.grid()  # Tampilkan scrollbar
+            else:
+                self.scrollbar_h.grid_remove()  # Sembunyikan scrollbar
+
+    def _check_scrollbars(self):
+        """Cek dan update status scrollbar"""
+        if self.canvas.bbox("all"):
+            # Update vertikal scrollbar
+            canvas_height = self.canvas.winfo_height()
+            content_height = self.canvas.bbox("all")[3]
+            
+            if content_height > canvas_height:
+                self.scrollbar_v.grid()  # Tampilkan scrollbar
+            else:
+                self.scrollbar_v.grid_remove()  # Sembunyikan scrollbar
+            
+            # Update horizontal scrollbar
+            canvas_width = self.canvas.winfo_width()
+            content_width = self.canvas.bbox("all")[2]
+            
+            if content_width > canvas_width:
+                self.scrollbar_h.grid()  # Tampilkan scrollbar
+            else:
+                self.scrollbar_h.grid_remove()  # Sembunyikan scrollbar
 
 
 # Perbarui kelas ClockFace
