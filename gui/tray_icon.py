@@ -17,6 +17,8 @@ class TrayIcon:
         self.app = app
         self.icon = None
         self.setup_tray()
+        # Simpan referensi ke thread tray
+        self.tray_thread = None
 
     def setup_tray(self):
         """Setup system tray icon"""
@@ -38,7 +40,9 @@ class TrayIcon:
             )
             
             self.icon = pystray.Icon("bell", image, f"Bell Sekolah {VERSION}", menu)
-            threading.Thread(target=self.icon.run, daemon=True).start()
+            # Jalankan di thread terpisah dan simpan referensinya
+            self.tray_thread = threading.Thread(target=self.icon.run, daemon=True)
+            self.tray_thread.start()
             log_info("System tray icon diinisialisasi")
         except Exception as e:
             log_error(f"Gagal setup tray icon: {e}")
@@ -109,9 +113,12 @@ class TrayIcon:
     def quit_app(self, icon, item):
         """Quit application"""
         try:
-            self.app.quit_app()
+            # Hentikan icon tray terlebih dahulu
             if self.icon:
                 self.icon.stop()
+            
+            # Gunakan after untuk memastikan ini dijalankan di thread utama
+            self.app.root.after(0, self.app.quit_app)
         except Exception as e:
             log_error(f"Gagal keluar: {e}")
             sys.exit(1)

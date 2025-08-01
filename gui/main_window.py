@@ -5,7 +5,9 @@ import os
 import shutil
 import threading
 from datetime import datetime
-import math  # Tambahkan import math
+import math
+import sys
+import pygame
 from data_manager import data_manager
 from audio_player import AudioPlayer
 from logger import log_error, log_info
@@ -492,12 +494,24 @@ class SchoolBellApp:
             log_error(f"Gagal minimize ke tray: {e}")
 
     def quit_app(self):
-        """Quit application"""
+        """Quit application dengan benar"""
         try:
+            # Hentikan semua proses background
+            if hasattr(self, 'audio_player'):
+                # Hentikan audio yang sedang diputar
+                if self.audio_player.currently_playing:
+                    if pygame.mixer.get_init():
+                        pygame.mixer.quit()
+            
+            # Hancurkan window
             self.root.quit()
             self.root.destroy()
+            
+            # Keluar dari aplikasi
+            sys.exit(0)
         except Exception as e:
             log_error(f"Gagal keluar aplikasi: {e}")
+            sys.exit(1)
 
     def _on_frame_configure(self, event):
         """Update scrollregion saat frame berubah ukuran"""

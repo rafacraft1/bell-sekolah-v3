@@ -54,3 +54,14 @@ class AudioPlayer:
                 pygame.mixer.quit()
             self.currently_playing = False
             return False
+    
+    def stop_audio(self):
+        """Hentikan audio yang sedang diputar"""
+        try:
+            if self.currently_playing and pygame.mixer.get_init():
+                pygame.mixer.music.stop()
+                pygame.mixer.quit()
+                self.currently_playing = False
+                log_info("Audio dihentikan")
+        except Exception as e:
+            log_error(f"Gagal menghentikan audio: {e}")
