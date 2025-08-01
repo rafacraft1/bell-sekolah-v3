@@ -22,6 +22,9 @@ class SchoolBellApp:
         self.root.geometry("1000x650")  # Ukuran fix
         self.root.resizable(False, False)  # Tidak bisa di-resize
         
+        # Set window icon
+        self._set_window_icon()
+        
         # Set theme colors
         self.bg_color = "#f5f6fa"
         self.primary_color = "#2c3e50"
@@ -52,6 +55,101 @@ class SchoolBellApp:
         
         # Setup close handler
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def _set_window_icon(self):
+        """Set icon untuk window aplikasi dengan multiple fallback"""
+        try:
+            # Debug: Cetak informasi icon
+            print("Setting window icon...")
+            
+            # Dapatkan path icon dengan beberapa metode
+            icon_paths = []
+            
+            # Metode 1: Gunakan resource_path
+            icon_path1 = resource_path(os.path.join(ASSETS_DIR, BELL_ICON))
+            icon_paths.append(("resource_path", icon_path1))
+            
+            # Metode 2: Gunakan absolute path
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            icon_path2 = os.path.join(base_dir, "..", "assets", BELL_ICON)
+            icon_path2 = os.path.abspath(icon_path2)
+            icon_paths.append(("absolute_path", icon_path2))
+            
+            # Metode 3: Coba di direktori kerja
+            icon_path3 = os.path.join("assets", BELL_ICON)
+            icon_paths.append(("working_dir", icon_path3))
+            
+            # Coba semua path
+            icon_set = False
+            for method, path in icon_paths:
+                print(f"Trying {method}: {path}")
+                print(f"File exists: {os.path.exists(path)}")
+                
+                if os.path.exists(path):
+                    try:
+                        # Untuk Windows, coba iconbitmap
+                        if sys.platform == "win32" and path.lower().endswith('.ico'):
+                            self.root.iconbitmap(path)
+                            print(f"Icon set using iconbitmap from {method}")
+                            icon_set = True
+                            break
+                        else:
+                            # Untuk cross-platform atau file non-ICO
+                            from PIL import Image, ImageTk
+                            icon_img = Image.open(path)
+                            icon_photo = ImageTk.PhotoImage(icon_img)
+                            self.root.iconphoto(True, icon_photo)
+                            print(f"Icon set using iconphoto from {method}")
+                            icon_set = True
+                            break
+                    except Exception as e:
+                        print(f"Failed to set icon from {method}: {e}")
+                        continue
+            
+            # Jika semua metode gagal, buat icon default
+            if not icon_set:
+                print("All icon methods failed, creating default icon")
+                self._create_default_icon()
+                
+        except Exception as e:
+            log_error(f"Gagal mengatur window icon: {e}")
+            print(f"Error in _set_window_icon: {e}")
+            self._create_default_icon()
+
+    def _create_default_icon(self):
+        """Buat icon default menggunakan Tkinter"""
+        try:
+            print("Creating default icon...")
+            
+            # Buat PhotoImage sederhana sebagai icon
+            icon_img = tk.PhotoImage(width=32, height=32)
+            
+            # Gambar bentuk lonceng sederhana
+            # Background transparan
+            for x in range(32):
+                for y in range(32):
+                    icon_img.put("#FFFFFF00", (x, y))  # Transparan
+            
+            # Gambar badan lonceng (lingkaran)
+            center_x, center_y = 16, 16
+            radius = 8
+            for x in range(32):
+                for y in range(32):
+                    if (x - center_x)**2 + (y - center_y)**2 <= radius**2:
+                        icon_img.put("#FFD700", (x, y))  # Emas
+            
+            # Gambar gagang lonceng
+            for x in range(14, 18):
+                for y in range(6, 10):
+                    icon_img.put("#8B4513", (x, y))  # Coklat
+            
+            # Atur sebagai icon
+            self.root.iconphoto(True, icon_img)
+            print("Default icon created successfully")
+            
+        except Exception as e:
+            log_error(f"Gagal membuat default icon: {e}")
+            print(f"Error creating default icon: {e}")
 
     def _setup_ui(self):
         # Header with gradient effect
@@ -257,20 +355,6 @@ class SchoolBellApp:
         # Enable canvas to receive focus for keyboard navigation
         self.canvas.focus_set()
         
-        # Action buttons
-        action_frame = tk.Frame(main_container, bg=self.bg_color)
-        action_frame.pack(fill="x", pady=(10, 0))
-        
-        self.clear_btn = self._create_styled_button(
-            action_frame, "Hapus Jadwal Hari Ini", self.warning_color, self.clear_day
-        )
-        self.clear_btn.pack(side="left", padx=(0, 10))
-        
-        self.refresh_btn = self._create_styled_button(
-            action_frame, "Muat Ulang", self.info_color, self.load_schedule
-        )
-        self.refresh_btn.pack(side="left")
-        
         # Status bar
         self.status_bar = StatusBar(self.root, self.primary_color, self.white_color)
         self.status_bar.pack(side="bottom", fill="x")
@@ -474,22 +558,6 @@ class SchoolBellApp:
         except Exception as e:
             log_error(f"Gagal load jadwal: {e}")
             messagebox.showerror("Error", f"Gagal memuat jadwal:\n{str(e)}")
-
-    def clear_day(self):
-        """Hapus semua jadwal hari tertentu"""
-        try:
-            day = self.day_var.get()
-            confirm = messagebox.askyesno("Konfirmasi", f"Hapus semua jadwal {day}?")
-            if confirm:
-                if data_manager.delete_day(day):
-                    # Refresh schedule table immediately
-                    self.load_schedule(force_refresh=True)
-                    messagebox.showinfo("Sukses", f"Jadwal hari {day} berhasil dihapus.")
-                else:
-                    messagebox.showerror("Error", f"Gagal menghapus jadwal hari {day}.")
-        except Exception as e:
-            log_error(f"Gagal hapus jadwal hari: {e}")
-            messagebox.showerror("Error", f"Gagal menghapus jadwal:\n{str(e)}")
 
     def on_close(self):
         """Minimize ke tray saat tombol close diklik"""

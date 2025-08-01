@@ -15,7 +15,8 @@ LOGS_DIR = "logs"
 ASSETS_DIR = "assets"
 
 # File
-BELL_ICON = "bell.png"
+BELL_ICON = "bell.ico"
+#BELL_ICON = "bell.png"
 BELL_ICO = "bell.ico"
 
 # GitHub
