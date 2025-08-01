@@ -5,6 +5,7 @@ import os
 import shutil
 import threading
 from datetime import datetime
+import math  # Tambahkan import math
 from data_manager import data_manager
 from audio_player import AudioPlayer
 from logger import log_error, log_info
@@ -610,3 +611,72 @@ class SchoolBellApp:
         """Handle window resize event"""
         # Update responsivitas tabel
         self.root.after(100, self._update_table_responsiveness)  # Delay untuk smooth update
+
+
+# Perbarui kelas ClockFace
+class ClockFace(tk.Canvas):
+    def __init__(self, parent, **kwargs):
+        # Hapus background dengan mengatur highlightthickness
+        kwargs['highlightthickness'] = 0
+        super().__init__(parent, **kwargs)
+        
+        # Atur ukuran jam
+        self.width = 180
+        self.height = 180
+        self.configure(width=self.width, height=self.height)
+        
+        # Pusat jam
+        self.center_x = self.width // 2
+        self.center_y = self.height // 2
+        self.radius = min(self.width, self.height) // 2 - 10
+        
+        # Gambar jam
+        self.draw_clock()
+        
+        # Update setiap detik
+        self.update_clock()
+    
+    def draw_clock(self):
+        # Hapus semua yang ada di canvas
+        self.delete("all")
+        
+        # Gambar angka jam
+        for i in range(1, 13):
+            angle = math.radians(i * 30 - 90)  # 0 derajat di posisi 12 jam
+            x = self.center_x + self.radius * 0.8 * math.cos(angle)
+            y = self.center_y + self.radius * 0.8 * math.sin(angle)
+            self.create_text(x, y, text=str(i), font=('Arial', 12, 'bold'), fill='black')
+        
+        # Gambar titik tengah
+        self.create_oval(self.center_x-5, self.center_y-5, self.center_x+5, self.center_y+5, fill='black')
+    
+    def update_clock(self):
+        now = datetime.now()
+        
+        # Hitung sudut untuk jarum jam, menit, dan detik
+        second_angle = math.radians(now.second * 6 - 90)
+        minute_angle = math.radians(now.minute * 6 - 90)
+        hour_angle = math.radians((now.hour % 12) * 30 + now.minute * 0.5 - 90)
+        
+        # Hapus jarum lama
+        self.delete("hour_hand")
+        self.delete("minute_hand")
+        self.delete("second_hand")
+        
+        # Gambar jarum jam
+        hour_x = self.center_x + self.radius * 0.5 * math.cos(hour_angle)
+        hour_y = self.center_y + self.radius * 0.5 * math.sin(hour_angle)
+        self.create_line(self.center_x, self.center_y, hour_x, hour_y, width=6, fill='black', tags="hour_hand")
+        
+        # Gambar jarum menit
+        minute_x = self.center_x + self.radius * 0.7 * math.cos(minute_angle)
+        minute_y = self.center_y + self.radius * 0.7 * math.sin(minute_angle)
+        self.create_line(self.center_x, self.center_y, minute_x, minute_y, width=4, fill='black', tags="minute_hand")
+        
+        # Gambar jarum detik
+        second_x = self.center_x + self.radius * 0.8 * math.cos(second_angle)
+        second_y = self.center_y + self.radius * 0.8 * math.sin(second_angle)
+        self.create_line(self.center_x, self.center_y, second_x, second_y, width=2, fill='red', tags="second_hand")
+        
+        # Update setiap detik
+        self.after(1000, self.update_clock)
