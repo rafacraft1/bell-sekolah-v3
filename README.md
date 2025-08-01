@@ -5,6 +5,7 @@
 **Repositori**: [GitHub](https://github.com/rafacraft1/bell-sekolah-v3)
 
 Aplikasi desktop berbasis Python untuk **penjadwalan bel otomatis** di sekolah. Dirancang dengan antarmuka grafis modern dan fitur lengkap untuk mempermudah pengaturan bel masuk, istirahat, dan pulang.
+Aplikasi ini masih dalam pengembangan jika terjadi error dalam penggunaan silahkan ajukan Issue di github
 
 ---
 
