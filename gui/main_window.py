@@ -66,17 +66,17 @@ class SchoolBellApp:
             icon_paths = []
             
             # Metode 1: Gunakan resource_path
-            icon_path1 = resource_path(os.path.join(ASSETS_DIR, BELL_ICON))
+            icon_path1 = resource_path(os.path.join(ASSETS_DIR, "logo.ico"))
             icon_paths.append(("resource_path", icon_path1))
             
             # Metode 2: Gunakan absolute path
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            icon_path2 = os.path.join(base_dir, "..", "assets", BELL_ICON)
+            icon_path2 = os.path.join(base_dir, "..", "assets", "logo.ico")
             icon_path2 = os.path.abspath(icon_path2)
             icon_paths.append(("absolute_path", icon_path2))
             
             # Metode 3: Coba di direktori kerja
-            icon_path3 = os.path.join("assets", BELL_ICON)
+            icon_path3 = os.path.join("assets", "logo.ico")
             icon_paths.append(("working_dir", icon_path3))
             
             # Coba semua path
@@ -161,17 +161,17 @@ class SchoolBellApp:
         logo_frame = tk.Frame(header_frame, bg=self.primary_color)
         logo_frame.pack(side="left", padx=20, pady=10)
         
-        # Add bell icon if available
+        # Add logo.ico if available
         try:
-            bell_icon_path = resource_path(os.path.join(ASSETS_DIR, BELL_ICON))
-            if os.path.exists(bell_icon_path):
+            logo_path = resource_path(os.path.join(ASSETS_DIR, "logo.ico"))
+            if os.path.exists(logo_path):
                 from PIL import Image, ImageTk
-                bell_img = Image.open(bell_icon_path)
-                bell_img = bell_img.resize((40, 40), Image.LANCZOS)
-                bell_photo = ImageTk.PhotoImage(bell_img)
-                bell_label = tk.Label(logo_frame, image=bell_photo, bg=self.primary_color)
-                bell_label.image = bell_photo
-                bell_label.pack(side="left", padx=(0, 10))
+                logo_img = Image.open(logo_path)
+                logo_img = logo_img.resize((40, 40), Image.LANCZOS)
+                logo_photo = ImageTk.PhotoImage(logo_img)
+                logo_label = tk.Label(logo_frame, image=logo_photo, bg=self.primary_color)
+                logo_label.image = logo_photo
+                logo_label.pack(side="left", padx=(0, 10))
         except:
             pass
         
@@ -358,9 +358,6 @@ class SchoolBellApp:
         # Status bar
         self.status_bar = StatusBar(self.root, self.primary_color, self.white_color)
         self.status_bar.pack(side="bottom", fill="x")
-        
-        # Setup keyboard navigation untuk scrolling
-        self._setup_keyboard_navigation()
 
     def _create_styled_button(self, parent, text, color, command, state="normal"):
         """Create a styled button with hover effect"""
@@ -560,11 +557,13 @@ class SchoolBellApp:
             messagebox.showerror("Error", f"Gagal memuat jadwal:\n{str(e)}")
 
     def on_close(self):
-        """Minimize ke tray saat tombol close diklik"""
+        """Keluar dari aplikasi saat tombol close diklik"""
         try:
-            self.root.withdraw()
+            # Tampilkan dialog konfirmasi sebelum keluar
+            if messagebox.askyesno("Konfirmasi", "Apakah Anda yakin ingin keluar dari aplikasi?"):
+                self.quit_app()
         except Exception as e:
-            log_error(f"Gagal minimize ke tray: {e}")
+            log_error(f"Gagal keluar aplikasi: {e}")
 
     def quit_app(self):
         """Quit application dengan benar"""
@@ -617,39 +616,6 @@ class SchoolBellApp:
             self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         except Exception as e:
             log_error(f"Gagal mouse wheel: {e}")
-
-    def _on_key_press(self, event):
-        """Handle key press events untuk scrolling"""
-        try:
-            if event.keysym == 'Up':
-                self.canvas.yview_scroll(-1, "units")
-            elif event.keysym == 'Down':
-                self.canvas.yview_scroll(1, "units")
-            elif event.keysym == 'Left':
-                self.canvas.xview_scroll(-1, "units")
-            elif event.keysym == 'Right':
-                self.canvas.xview_scroll(1, "units")
-            elif event.keysym == 'Page_Up':
-                self.canvas.yview_scroll(-1, "pages")
-            elif event.keysym == 'Page_Down':
-                self.canvas.yview_scroll(1, "pages")
-            elif event.keysym == 'Home':
-                self.canvas.yview_moveto(0)
-            elif event.keysym == 'End':
-                self.canvas.yview_moveto(1)
-        except Exception as e:
-            log_error(f"Gagal key press: {e}")
-
-    def _setup_keyboard_navigation(self):
-        """Setup keyboard navigation untuk scrolling"""
-        self.root.bind("<Up>", lambda e: self._on_key_press(e))
-        self.root.bind("<Down>", lambda e: self._on_key_press(e))
-        self.root.bind("<Left>", lambda e: self._on_key_press(e))
-        self.root.bind("<Right>", lambda e: self._on_key_press(e))
-        self.root.bind("<Prior>", lambda e: self._on_key_press(e))  # Page Up
-        self.root.bind("<Next>", lambda e: self._on_key_press(e))   # Page Down
-        self.root.bind("<Home>", lambda e: self._on_key_press(e))
-        self.root.bind("<End>", lambda e: self._on_key_press(e))
         
     def _update_table_responsiveness(self):
         """Update tabel responsivitas berdasarkan ukuran window"""
