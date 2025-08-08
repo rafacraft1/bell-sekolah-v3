@@ -11,7 +11,7 @@ import pygame
 from data_manager import data_manager
 from audio_player import AudioPlayer
 from logger import log_error, log_info
-from constants import AUDIO_DIR, AUDIO_FORMATS, DAYS, ASSETS_DIR, BELL_ICON
+from constants import AUDIO_DIR, AUDIO_FORMATS, DAYS, ASSETS_DIR
 from utils import resource_path
 from .components import ClockFace, ScheduleTable, StatusBar
 
@@ -557,17 +557,33 @@ class SchoolBellApp:
             messagebox.showerror("Error", f"Gagal memuat jadwal:\n{str(e)}")
 
     def on_close(self):
-        """Keluar dari aplikasi saat tombol close diklik"""
+        """Minimize ke tray saat tombol close diklik"""
         try:
-            # Tampilkan dialog konfirmasi sebelum keluar
-            if messagebox.askyesno("Konfirmasi", "Apakah Anda yakin ingin keluar dari aplikasi?"):
-                self.quit_app()
+            # Cek apakah tray icon tersedia
+            if hasattr(self, 'tray_icon') and self.tray_icon:
+                # Minimize ke system tray
+                self.root.withdraw()
+                
+                # Tampilkan notifikasi bahwa aplikasi masih berjalan di tray
+                try:
+                    from utils import show_notification
+                    show_notification("Bell Sekolah Otomatis", "Aplikasi masih berjalan di system tray")
+                except:
+                    pass
+            else:
+                # Jika tidak ada tray icon, tampilkan dialog konfirmasi
+                if messagebox.askyesno("Konfirmasi", "Apakah Anda yakin ingin keluar dari aplikasi?"):
+                    self.quit_app()
         except Exception as e:
-            log_error(f"Gagal keluar aplikasi: {e}")
+            log_error(f"Gagal minimize ke tray: {e}")
 
     def quit_app(self):
         """Quit application dengan benar"""
         try:
+            # Hentikan tray icon
+            if hasattr(self, 'tray_icon') and self.tray_icon:
+                self.tray_icon.stop()
+            
             # Hentikan semua proses background
             if hasattr(self, 'audio_player'):
                 # Hentikan audio yang sedang diputar

@@ -1,73 +1,63 @@
 # main.py
-import os
-import sys
 import tkinter as tk
-import time
-import pygame
-from data_manager import data_manager
-from scheduler import BellScheduler
-from gui.main_window import SchoolBellApp
-from gui.tray_icon import TrayIcon
 from gui.splash_screen import SplashScreen
-from logger import log_info, log_error
-from constants import AUDIO_DIR, LOGS_DIR
-
-def run_main_app():
-    """Jalankan aplikasi utama setelah splash screen selesai"""
-    try:
-        # Langkah 5: Mempersiapkan antarmuka
-        root = tk.Tk()
-        app = SchoolBellApp(root)
-        
-        # Langkah 6: Memuat file audio
-        app.load_audio_files()
-        
-        # Langkah 7: Memuat jadwal
-        app.load_schedule()
-        
-        # Langkah 8: Menginisialisasi pemutar audio
-        audio_player = app.audio_player
-        
-        # Langkah 9: Mengatur sistem tray
-        scheduler = BellScheduler(audio_player)
-        tray = TrayIcon(app)
-        
-        # Langkah 10: Menyelesaikan inisialisasi
-        log_info("Aplikasi berhasil diinisialisasi")
-        
-        # Jalankan aplikasi utama
-        root.mainloop()
-        
-    except Exception as e:
-        log_error(f"Fatal error di main: {e}")
-        raise
+from gui.main_window import SchoolBellApp
+from data_manager import data_manager
+from logger import log_info
+from gui.tray_icon import TrayIcon
+import threading
+import sys
+import time
 
 def main():
-    try:
-        # Inisialisasi pygame mixer untuk audio
-        pygame.init()
+    # Inisialisasi database
+    data_manager.init_db()
+    
+    # Cek database kosong
+    if data_manager.is_database_empty():
+        data_manager.insert_dummy_data()
+    
+    # Buat root window
+    root = tk.Tk()
+    root.withdraw()  # Sembunyikan dulu
+    
+    # Fungsi callback untuk splash screen
+    def start_app():
+        # Buat aplikasi setelah splash screen selesai
+        app = SchoolBellApp(root)
         
-        # Langkah 1: Membuat folder aplikasi
-        os.makedirs(AUDIO_DIR, exist_ok=True)
-        os.makedirs(LOGS_DIR, exist_ok=True)
+        # Setup system tray
+        try:
+            tray_icon = TrayIcon(app)
+            icon = tray_icon.setup()
+            
+            if icon:
+                # Simpan referensi tray icon di app
+                app.tray_icon = tray_icon
+                
+                # Jalankan tray icon
+                tray_icon.run()
+                
+                # Tunggu sebentar agar tray icon sempat berjalan
+                time.sleep(1.0)  # Tambah waktu tunggu
+                
+                print("Tray icon berhasil dijalankan")
+            else:
+                print("Gagal membuat tray icon")
+                app.tray_icon = None
+        except Exception as e:
+            print(f"Error setting up tray: {e}")
+            app.tray_icon = None
         
-        # Langkah 2: Menginisialisasi database
-        data_manager.init_db()
+        # Tampilkan jendela utama
+        root.deiconify()
         
-        # Langkah 3: Memeriksa database
-        is_empty = data_manager.is_database_empty()
-        
-        # Langkah 4: Memuat data default
-        if is_empty:
-            data_manager.insert_dummy_data()
-        
-        # Buat dan tampilkan splash screen
-        splash = SplashScreen(callback=run_main_app)
-        splash.run()
-        
-    except Exception as e:
-        log_error(f"Fatal error di main: {e}")
-        raise
+        # Jalankan aplikasi
+        root.mainloop()
+    
+    # Buat splash screen
+    splash = SplashScreen(start_app)
+    splash.run()
 
 if __name__ == "__main__":
     main()

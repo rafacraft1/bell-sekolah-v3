@@ -1,124 +1,106 @@
 # gui/tray_icon.py
+import pystray
+from PIL import Image, ImageDraw
 import os
 import sys
 import threading
-import tkinter as tk
-from tkinter import messagebox
-import datetime
-import pystray
-from PIL import Image, ImageDraw
-from data_manager import data_manager
-from logger import log_error, log_info
-from utils import resource_path, setup_autostart
-from constants import ASSETS_DIR, BELL_ICON, VERSION
+from constants import ASSETS_DIR
+from utils import resource_path
 
 class TrayIcon:
     def __init__(self, app):
         self.app = app
         self.icon = None
-        self.setup_tray()
-        # Simpan referensi ke thread tray
-        self.tray_thread = None
-
-    def setup_tray(self):
-        """Setup system tray icon"""
+        self.running = False
+        self.icon_thread = None
+        
+    def create_icon_image(self):
+        """Create tray icon using logo.ico"""
+        # Gunakan logo.ico
+        icon_path = resource_path(os.path.join(ASSETS_DIR, "logo.ico"))
+        
+        if os.path.exists(icon_path):
+            # Gunakan logo.ico langsung
+            try:
+                icon_image = Image.open(icon_path)
+                # Resize untuk memastikan ukuran yang tepat untuk tray icon
+                icon_image = icon_image.resize((64, 64), Image.LANCZOS)
+                return icon_image
+            except Exception as e:
+                print(f"Error loading icon: {e}")
+        
+        # Fallback: buat icon sederhana
+        icon_image = Image.new('RGB', (64, 64), color=(0, 0, 0))
+        draw = ImageDraw.Draw(icon_image)
+        draw.ellipse((8, 8, 56, 56), fill=(255, 215, 0))  # Lingkaran emas
+        draw.rectangle((28, 4, 36, 20), fill=(139, 69, 19))  # Gagang coklat
+        return icon_image
+    
+    def show_window(self, icon=None, item=None):
+        """Tampilkan jendela utama"""
+        self.app.root.deiconify()
+        self.app.root.lift()
+    
+    def quit_app(self, icon=None, item=None):
+        """Keluar dari aplikasi"""
+        self.running = False
+        # Schedule quit di main thread
+        self.app.root.after(100, self.app.quit_app)
+    
+    def setup(self):
+        """Setup system tray"""
         try:
-            image_path = resource_path(os.path.join(ASSETS_DIR, BELL_ICON))
-            if os.path.exists(image_path):
-                image = Image.open(image_path)
-            else:
-                image = Image.new('RGB', (64, 64), 'orange')
-                d = ImageDraw.Draw(image)
-                d.text((10, 25), "BELL", fill="white")
+            icon_image = self.create_icon_image()
             
-            menu = (
-                pystray.MenuItem('Buka Aplikasi', self.show_window),
-                pystray.MenuItem('Lihat Jadwal Hari Ini', self.show_schedule),
-                pystray.MenuItem('Reset ke Default', self.reset_to_default),
-                pystray.MenuItem('Autostart', self.toggle_autostart, checked=lambda item: self.is_autostart_enabled()),
-                pystray.MenuItem('Keluar', self.quit_app)
+            menu = pystray.Menu(
+                pystray.MenuItem("Tampilkan", self.show_window),
+                pystray.MenuItem("Keluar", self.quit_app)
             )
             
-            self.icon = pystray.Icon("bell", image, f"Bell Sekolah {VERSION}", menu)
-            # Jalankan di thread terpisah dan simpan referensinya
-            self.tray_thread = threading.Thread(target=self.icon.run, daemon=True)
-            self.tray_thread.start()
-            log_info("System tray icon diinisialisasi")
-        except Exception as e:
-            log_error(f"Gagal setup tray icon: {e}")
-
-    def show_window(self, icon, item):
-        """Show main window"""
-        self.app.root.deiconify()
-
-    def show_schedule(self, icon, item):
-        """Show today's schedule"""
-        try:
-            day_map = {
-                "Monday": "Senin", "Tuesday": "Selasa", "Wednesday": "Rabu",
-                "Thursday": "Kamis", "Friday": "Jumat", "Saturday": "Sabtu"
-            }
-            today = day_map.get(datetime.datetime.now().strftime("%A"), "Senin")
-            schedules = data_manager.get_schedules().get(today, [])
-            msg = "\n".join([f"{t} - {os.path.basename(p)}" for t, p in schedules])
-            if not msg:
-                msg = "Tidak ada jadwal hari ini."
-            messagebox.showinfo(f"Jadwal {today}", msg)
-        except Exception as e:
-            log_error(f"Gagal menampilkan jadwal: {e}")
-
-    def reset_to_default(self, icon, item):
-        """Reset to default configuration"""
-        try:
-            confirm = messagebox.askyesno("Reset", "Yakin ingin reset ke konfigurasi default?")
-            if confirm:
-                if data_manager.reset_to_default():
-                    # Refresh schedule table immediately
-                    self.app.load_schedule(force_refresh=True)
-                    messagebox.showinfo("Reset", "Aplikasi telah direset ke konfigurasi default.")
-                else:
-                    messagebox.showerror("Error", "Gagal reset ke konfigurasi default.")
-        except Exception as e:
-            log_error(f"Gagal reset: {e}")
-
-    def toggle_autostart(self, icon, item):
-        """Toggle autostart"""
-        try:
-            current_state = self.is_autostart_enabled()
-            setup_autostart(not current_state)
-        except Exception as e:
-            log_error(f"Gagal toggle autostart: {e}")
-
-    def is_autostart_enabled(self):
-        """Check if autostart is enabled"""
-        try:
-            if sys.platform == 'win32':
-                import winreg as reg
-                key = reg.HKEY_CURRENT_USER
-                sub_key = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
-                app_name = "SchoolBell"
-                try:
-                    reg.OpenKey(key, sub_key + "\\" + app_name)
-                    return True
-                except:
-                    return False
-            elif sys.platform.startswith('linux'):
-                autostart_file = os.path.expanduser("~/.config/autostart/bell-sekolah.desktop")
-                return os.path.exists(autostart_file)
-            return False
-        except Exception as e:
-            log_error(f"Gagal cek autostart: {e}")
-            return False
-
-    def quit_app(self, icon, item):
-        """Quit application"""
-        try:
-            # Hentikan icon tray terlebih dahulu
-            if self.icon:
-                self.icon.stop()
+            self.icon = pystray.Icon(
+                "bell_sekolah",
+                icon_image,
+                "Bell Sekolah Otomatis",
+                menu
+            )
             
-            # Gunakan after untuk memastikan ini dijalankan di thread utama
-            self.app.root.after(0, self.app.quit_app)
+            return self.icon
         except Exception as e:
-            log_error(f"Gagal keluar: {e}")
-            sys.exit(1)
+            print(f"Error setting up tray icon: {e}")
+            return None
+    
+    def run(self):
+        """Jalankan system tray"""
+        if self.icon:
+            try:
+                self.running = True
+                # Jalankan di thread terpisah
+                self.icon_thread = threading.Thread(target=self._run_icon, daemon=True)
+                self.icon_thread.start()
+            except Exception as e:
+                print(f"Error running tray icon: {e}")
+    
+    def _run_icon(self):
+        """Fungsi internal untuk menjalankan icon"""
+        try:
+            # Cek platform untuk pendekatan yang berbeda
+            if sys.platform == "win32":
+                # Untuk Windows, gunakan pendekatan khusus
+                self.icon.run()
+            else:
+                # Untuk platform lain
+                self.icon.run()
+        except Exception as e:
+            print(f"Error in icon thread: {e}")
+    
+    def stop(self):
+        """Hentikan system tray"""
+        if self.icon and self.running:
+            try:
+                self.icon.stop()
+                self.running = False
+                # Tunggu thread selesai
+                if self.icon_thread and self.icon_thread.is_alive():
+                    self.icon_thread.join(timeout=1.0)
+            except Exception as e:
+                print(f"Error stopping tray icon: {e}")

@@ -1,10 +1,10 @@
-# splash_screen.py
+# gui/splash_screen.py
 import tkinter as tk
 from tkinter import ttk
 import time
 from PIL import Image, ImageTk
 import os
-from constants import ASSETS_DIR, BELL_ICON, VERSION
+from constants import ASSETS_DIR, VERSION
 from utils import resource_path
 
 class SplashScreen:
@@ -37,7 +37,8 @@ class SplashScreen:
         self.logo_frame.pack(pady=10)
         
         try:
-            logo_path = resource_path(os.path.join(ASSETS_DIR, BELL_ICON))
+            # Gunakan logo.ico
+            logo_path = resource_path(os.path.join(ASSETS_DIR, "logo.ico"))
             if os.path.exists(logo_path):
                 logo_img = Image.open(logo_path)
                 logo_img = logo_img.resize((80, 80), Image.LANCZOS)
