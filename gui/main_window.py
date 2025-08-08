@@ -624,7 +624,7 @@ class SchoolBellApp:
                 
                 # Hancurkan jendela dan keluar aplikasi
                 self.root.destroy()
-                sys.exit(0)
+                # Tidak perlu sys.exit(0) di sini karena akan menyebabkan aplikasi tertutup segera
         except Exception as e:
             log_error(f"Error saat menutup aplikasi: {e}")
             # Force exit jika terjadi error

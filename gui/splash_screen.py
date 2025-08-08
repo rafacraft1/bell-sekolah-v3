@@ -8,8 +8,9 @@ from constants import ASSETS_DIR, VERSION
 from utils import resource_path
 
 class SplashScreen:
-    def __init__(self, callback):
-        self.callback = callback
+    def __init__(self):
+        print("Creating splash screen...")  # Debug print
+        
         self.root = tk.Tk()
         self.root.title("Bell Sekolah Otomatis - Loading")
         
@@ -45,10 +46,12 @@ class SplashScreen:
                 self.logo_photo = ImageTk.PhotoImage(logo_img)
                 logo_label = tk.Label(self.logo_frame, image=self.logo_photo, bg="#2c3e50")
                 logo_label.pack()
+                print("Logo loaded successfully")  # Debug print
         except Exception as e:
             # Fallback jika logo tidak ditemukan
             logo_label = tk.Label(self.logo_frame, text="🔔", font=("Arial", 48), bg="#2c3e50", fg="white")
             logo_label.pack()
+            print(f"Failed to load logo: {e}")  # Debug print
         
         # Judul dan versi
         title_label = tk.Label(
@@ -74,7 +77,7 @@ class SplashScreen:
         self.progress_frame.pack(fill=tk.X, pady=20)
         
         # Progress bar
-        self.progress_var = tk.DoubleVar()
+        self.progress_var = tk.DoubleVar(value=0)
         self.progress_bar = ttk.Progressbar(
             self.progress_frame,
             orient=tk.HORIZONTAL,
@@ -83,6 +86,7 @@ class SplashScreen:
             variable=self.progress_var
         )
         self.progress_bar.pack(fill=tk.X, pady=(0, 10))
+        print("Progress bar created")  # Debug print
         
         # Status label
         self.status_var = tk.StringVar(value="Memulai aplikasi...")
@@ -96,6 +100,17 @@ class SplashScreen:
         )
         self.status_label.pack()
         
+        # Progress percentage label
+        self.progress_percent_var = tk.StringVar(value="0%")
+        self.progress_percent_label = tk.Label(
+            self.progress_frame,
+            textvariable=self.progress_percent_var,
+            font=("Arial", 9),
+            bg="#2c3e50",
+            fg="white"
+        )
+        self.progress_percent_label.pack()
+        
         # Copyright
         copyright_label = tk.Label(
             self.main_frame,
@@ -106,56 +121,40 @@ class SplashScreen:
         )
         copyright_label.pack(side=tk.BOTTOM, pady=10)
         
-        # Inisialisasi status
-        self.steps = [
-            "Membuat folder aplikasi...",
-            "Menginisialisasi database...",
-            "Memeriksa database...",
-            "Memuat data default...",
-            "Mempersiapkan antarmuka...",
-            "Memuat file audio...",
-            "Memuat jadwal...",
-            "Menginisialisasi pemutar audio...",
-            "Mengatur sistem tray...",
-            "Menyelesaikan inisialisasi..."
-        ]
-        
-        self.current_step = 0
-        self.total_steps = len(self.steps)
-        
-        # Mulai proses setelah splash screen tampil
-        self.root.after(100, self.start_initialization)
+        # Force update UI
+        self.root.update()
+        print("Splash screen initialized successfully")  # Debug print
     
-    def start_initialization(self):
-        """Mulai proses inisialisasi"""
-        self.update_status()
-    
-    def update_status(self):
+    def update_progress(self, message=None, progress=None):
         """Update progress bar dan status text"""
-        if self.current_step < self.total_steps:
+        try:
+            print(f"Updating progress: {message} - {progress}%")  # Debug print
+            
             # Update status text
-            self.status_var.set(self.steps[self.current_step])
+            if message:
+                self.status_var.set(message)
             
             # Update progress bar
-            progress_value = (self.current_step + 1) * 100 / self.total_steps
-            self.progress_var.set(progress_value)
+            if progress is not None:
+                self.progress_var.set(progress)
+                self.progress_percent_var.set(f"{progress}%")
             
-            # Increment step
-            self.current_step += 1
-            
-            # Schedule next update
-            self.root.after(500, self.update_status)  # 500ms per step
-        else:
-            # Semua langkah selesai, tunggu 2 detik tambahan
-            self.status_var.set("Inisialisasi selesai. Memulai aplikasi...")
-            self.root.after(2000, self.close)
+            # Force update UI
+            self.root.update()
+            print(f"Progress updated successfully: {message} - {progress}%")  # Debug print
+                
+        except Exception as e:
+            print(f"Error updating progress: {e}")
     
     def close(self):
-        """Tutup splash screen dan jalankan callback"""
-        self.root.destroy()
-        if self.callback:
-            self.callback()
+        """Tutup splash screen"""
+        try:
+            print("Closing splash screen")  # Debug print
+            self.root.destroy()
+        except Exception as e:
+            print(f"Error closing splash screen: {e}")
     
     def run(self):
         """Jalankan splash screen"""
+        print("Starting splash screen mainloop")  # Debug print
         self.root.mainloop()
