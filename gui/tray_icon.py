@@ -42,10 +42,10 @@ class TrayIcon:
         self.app.root.lift()
     
     def quit_app(self, icon=None, item=None):
-        """Keluar dari aplikasi"""
+        """Keluar dari aplikasi melalui tray menu"""
         self.running = False
         # Schedule quit di main thread
-        self.app.root.after(100, self.app.quit_app)
+        self.app.root.after(100, self.app.on_close)
     
     def setup(self):
         """Setup system tray"""

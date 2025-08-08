@@ -46,6 +46,10 @@ class SchoolBellApp:
         # Audio player
         self.audio_player = AudioPlayer()
         
+        # Inisialisasi scheduler
+        from scheduler import BellScheduler
+        self.scheduler = BellScheduler(self.audio_player)
+        
         # Setup UI
         self._setup_ui()
         
@@ -487,311 +491,145 @@ class SchoolBellApp:
             
             # Nonaktifkan tombol play sementara
             self.play_button.config(state="disabled", text="⏸ Playing...")
-            self.root.update()  # Force update UI
+            self.root.update()  # Force update
             
-            # Putar audio di thread terpisah agar UI tidak freeze
+            # Putar audio di thread terpisah
             threading.Thread(
                 target=self._play_audio_thread,
                 args=(path,),
                 daemon=True
             ).start()
         except Exception as e:
-            log_error(f"Gagal putar audio: {e}")
+            log_error(f"Gagal play audio: {e}")
             messagebox.showerror("Error", f"Gagal memutar audio:\n{str(e)}")
             self.play_button.config(state="normal", text="▶ Play")
 
     def _play_audio_thread(self, path):
         """Putar audio di thread terpisah"""
         try:
-            if self.audio_player.play_audio(path, blocking=True):
-                # Berhasil diputar
-                pass
-            else:
-                # Gagal diputar
-                self.root.after(0, lambda: messagebox.showerror("Error", "Gagal memutar audio"))
+            success = self.audio_player.play_audio(path, blocking=True)
+            
+            # Kembalikan state tombol play
+            self.root.after(0, lambda: self.play_button.config(
+                state="normal", 
+                text="▶ Play"
+            ))
+            
+            if not success:
+                self.root.after(0, lambda: messagebox.showerror(
+                    "Error", 
+                    "Gagal memutar audio. Cek file dan format audio."
+                ))
         except Exception as e:
-            log_error(f"Error di thread audio: {e}")
-            self.root.after(0, lambda: messagebox.showerror("Error", f"Gagal memutar audio:\n{str(e)}"))
-        finally:
-            # Aktifkan kembali tombol play
-            self.root.after(0, lambda: self.play_button.config(state="normal", text="▶ Play"))
+            log_error(f"Error di play audio thread: {e}")
+            self.root.after(0, lambda: self.play_button.config(
+                state="normal", 
+                text="▶ Play"
+            ))
 
     def add_schedule(self):
         """Tambah jadwal baru"""
         try:
             day = self.day_var.get()
-            schedule_time = self.time_var.get()
+            time_str = self.time_var.get()
             path = self.audio_path.get()
             
-            if not path or not schedule_time:
-                messagebox.showwarning("Peringatan", "Isi waktu dan pilih file audio.")
+            # Validasi input
+            if not day or not time_str or not path:
+                messagebox.showwarning("Input Tidak Lengkap", "Harap isi semua field!")
                 return
             
             # Validasi format waktu
             try:
-                datetime.strptime(schedule_time, "%H:%M")
+                datetime.strptime(time_str, "%H:%M")
             except ValueError:
-                messagebox.showerror("Error", "Format waktu salah. Gunakan HH:MM")
+                messagebox.showerror("Format Waktu Salah", "Format waktu harus HH:MM (contoh: 07:30)")
                 return
             
-            if data_manager.add_schedule(day, schedule_time, path):
-                # Refresh schedule table immediately
-                self.load_schedule(force_refresh=True)
-                messagebox.showinfo("Sukses", "Jadwal berhasil ditambahkan.")
+            # Tambah ke database
+            if data_manager.add_schedule(day, time_str, path):
+                messagebox.showinfo("Sukses", f"Jadwal berhasil ditambahkan:\n{day} {time_str}")
+                self.load_schedule()  # Refresh tabel
             else:
-                messagebox.showerror("Error", "Gagal menambahkan jadwal.")
+                messagebox.showerror("Error", "Gagal menambahkan jadwal. Cek log untuk detail.")
         except Exception as e:
             log_error(f"Gagal tambah jadwal: {e}")
             messagebox.showerror("Error", f"Gagal menambahkan jadwal:\n{str(e)}")
 
-    def load_schedule(self, force_refresh=False):
-        """Load schedule from database"""
+    def load_schedule(self):
+        """Muat jadwal dari database ke tabel"""
         try:
-            # Force refresh data from database
-            schedules = data_manager.get_schedules(force_refresh=force_refresh)
-            self.schedule_table.update_schedule(schedules)
-            # Cek scrollbar setelah update
-            self.root.after(100, self._check_scrollbars)
+            schedules = data_manager.get_schedules()
+            self.schedule_table.update_data(schedules)
+            
+            # Update status bar
+            total_schedules = sum(len(day_schedules) for day_schedules in schedules.values())
+            self.status_bar.update_status(f"Total jadwal: {total_schedules}")
         except Exception as e:
             log_error(f"Gagal load jadwal: {e}")
             messagebox.showerror("Error", f"Gagal memuat jadwal:\n{str(e)}")
 
-    def on_close(self):
-        """Minimize ke tray saat tombol close diklik"""
-        try:
-            # Cek apakah tray icon tersedia
-            if hasattr(self, 'tray_icon') and self.tray_icon:
-                # Minimize ke system tray
-                self.root.withdraw()
-                
-                # Tampilkan notifikasi bahwa aplikasi masih berjalan di tray
-                try:
-                    from utils import show_notification
-                    show_notification("Bell Sekolah Otomatis", "Aplikasi masih berjalan di system tray")
-                except:
-                    pass
-            else:
-                # Jika tidak ada tray icon, tampilkan dialog konfirmasi
-                if messagebox.askyesno("Konfirmasi", "Apakah Anda yakin ingin keluar dari aplikasi?"):
-                    self.quit_app()
-        except Exception as e:
-            log_error(f"Gagal minimize ke tray: {e}")
-
-    def quit_app(self):
-        """Quit application dengan benar"""
-        try:
-            # Hentikan tray icon
-            if hasattr(self, 'tray_icon') and self.tray_icon:
-                self.tray_icon.stop()
-            
-            # Hentikan semua proses background
-            if hasattr(self, 'audio_player'):
-                # Hentikan audio yang sedang diputar
-                if self.audio_player.currently_playing:
-                    if pygame.mixer.get_init():
-                        pygame.mixer.quit()
-            
-            # Hancurkan window
-            self.root.quit()
-            self.root.destroy()
-            
-            # Keluar dari aplikasi
-            sys.exit(0)
-        except Exception as e:
-            log_error(f"Gagal keluar aplikasi: {e}")
-            sys.exit(1)
-
-    def _on_frame_configure(self, event):
-        """Update scrollregion saat frame berubah ukuran"""
-        try:
-            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-            # Update responsivitas
-            self._update_table_responsiveness()
-            # Cek scrollbar
-            self._check_scrollbars()
-        except Exception as e:
-            log_error(f"Gagal frame configure: {e}")
-
-    def _on_canvas_configure(self, event):
-        """Update canvas window size saat canvas berubah ukuran"""
-        try:
-            # Update lebar canvas window agar sesuai dengan canvas
-            if hasattr(self, 'schedule_table'):
-                content_width = self.schedule_table.get_content_width()
-                self.canvas.itemconfig(self.canvas_window, 
-                                     width=max(content_width, event.width))
-            # Cek scrollbar
-            self._check_scrollbars()
-        except Exception as e:
-            log_error(f"Gagal canvas configure: {e}")
-
-    def _on_mousewheel(self, event):
-        """Handle mouse wheel scrolling"""
-        try:
-            # Scroll vertical
-            self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        except Exception as e:
-            log_error(f"Gagal mouse wheel: {e}")
-        
-    def _update_table_responsiveness(self):
-        """Update tabel responsivitas berdasarkan ukuran window"""
-        try:
-            # Dapatkan ukuran canvas
-            canvas_width = self.canvas.winfo_width()
-            canvas_height = self.canvas.winfo_height()
-            
-            if canvas_width > 1 and canvas_height > 1:  # Valid size
-                # Update ukuran font berdasarkan lebar canvas
-                base_font_size = max(8, min(12, canvas_width // 100))
-                header_font_size = max(9, min(14, base_font_size + 2))
-                
-                # Update font di header labels
-                if hasattr(self, 'header_labels'):
-                    for label in self.header_labels:
-                        current_font = label.cget("font")
-                        if isinstance(current_font, tuple):
-                            font_family = current_font[0]
-                            new_font = (font_family, header_font_size, "bold")
-                        else:
-                            new_font = ("Arial", header_font_size, "bold")
-                        label.config(font=new_font)
-                
-                # Update font di schedule table
-                if hasattr(self, 'schedule_table'):
-                    self.schedule_table.update_font_size(base_font_size)
-                
-                # Update canvas window size
-                if hasattr(self, 'schedule_table'):
-                    content_width = self.schedule_table.get_content_width()
-                    content_height = self.schedule_table.get_content_height()
-                    
-                    # Update canvas window size
-                    self.canvas.itemconfig(self.canvas_window, 
-                                         width=max(content_width, canvas_width),
-                                         height=max(content_height, canvas_height))
-                    
-                    # Update scrollregion
-                    self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-                                
-        except Exception as e:
-            log_error(f"Gagal update responsivitas tabel: {e}")
-
     def _update_vertical_scrollbar(self, first, last):
-        """Update vertikal scrollbar dan tampilkan/sembunyikan sesuai kebutuhan"""
-        # Update posisi scrollbar
-        self.scrollbar_v.set(first, last)
-        
-        # Cek apakah scrollbar diperlukan
-        if self.canvas.bbox("all"):
-            canvas_height = self.canvas.winfo_height()
-            content_height = self.canvas.bbox("all")[3]
-            
-            if content_height > canvas_height:
-                self.scrollbar_v.grid()  # Tampilkan scrollbar
-            else:
-                self.scrollbar_v.grid_remove()  # Sembunyikan scrollbar
+        """Update vertical scrollbar visibility"""
+        self.canvas.yview_moveto(first)
+        if float(last) - float(first) < 1.0:
+            self.scrollbar_v.grid()
+        else:
+            self.scrollbar_v.grid_remove()
 
     def _update_horizontal_scrollbar(self, first, last):
-        """Update horizontal scrollbar dan tampilkan/sembunyikan sesuai kebutuhan"""
-        # Update posisi scrollbar
-        self.scrollbar_h.set(first, last)
-        
-        # Cek apakah scrollbar diperlukan
-        if self.canvas.bbox("all"):
-            canvas_width = self.canvas.winfo_width()
-            content_width = self.canvas.bbox("all")[2]
-            
-            if content_width > canvas_width:
-                self.scrollbar_h.grid()  # Tampilkan scrollbar
-            else:
-                self.scrollbar_h.grid_remove()  # Sembunyikan scrollbar
+        """Update horizontal scrollbar visibility"""
+        self.canvas.xview_moveto(first)
+        if float(last) - float(first) < 1.0:
+            self.scrollbar_h.grid()
+        else:
+            self.scrollbar_h.grid_remove()
 
-    def _check_scrollbars(self):
-        """Cek dan update status scrollbar"""
-        if self.canvas.bbox("all"):
-            # Update vertikal scrollbar
-            canvas_height = self.canvas.winfo_height()
-            content_height = self.canvas.bbox("all")[3]
-            
-            if content_height > canvas_height:
-                self.scrollbar_v.grid()  # Tampilkan scrollbar
-            else:
-                self.scrollbar_v.grid_remove()  # Sembunyikan scrollbar
-            
-            # Update horizontal scrollbar
-            canvas_width = self.canvas.winfo_width()
-            content_width = self.canvas.bbox("all")[2]
-            
-            if content_width > canvas_width:
-                self.scrollbar_h.grid()  # Tampilkan scrollbar
-            else:
-                self.scrollbar_h.grid_remove()  # Sembunyikan scrollbar
+    def _on_frame_configure(self, event=None):
+        """Reset the scroll region to encompass the inner frame"""
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
+    def _on_canvas_configure(self, event):
+        """Adjust inner frame width to match canvas width"""
+        # Update the width of the frame to fill the canvas
+        canvas_width = event.width
+        self.canvas.itemconfig(self.canvas_window, width=canvas_width)
 
-# Perbarui kelas ClockFace
-class ClockFace(tk.Canvas):
-    def __init__(self, parent, **kwargs):
-        # Hapus background dengan mengatur highlightthickness
-        kwargs['highlightthickness'] = 0
-        super().__init__(parent, **kwargs)
-        
-        # Atur ukuran jam
-        self.width = 180
-        self.height = 180
-        self.configure(width=self.width, height=self.height)
-        
-        # Pusat jam
-        self.center_x = self.width // 2
-        self.center_y = self.height // 2
-        self.radius = min(self.width, self.height) // 2 - 10
-        
-        # Gambar jam
-        self.draw_clock()
-        
-        # Update setiap detik
-        self.update_clock()
-    
-    def draw_clock(self):
-        # Hapus semua yang ada di canvas
-        self.delete("all")
-        
-        # Gambar angka jam
-        for i in range(1, 13):
-            angle = math.radians(i * 30 - 90)  # 0 derajat di posisi 12 jam
-            x = self.center_x + self.radius * 0.8 * math.cos(angle)
-            y = self.center_y + self.radius * 0.8 * math.sin(angle)
-            self.create_text(x, y, text=str(i), font=('Arial', 12, 'bold'), fill='black')
-        
-        # Gambar titik tengah
-        self.create_oval(self.center_x-5, self.center_y-5, self.center_x+5, self.center_y+5, fill='black')
-    
-    def update_clock(self):
-        now = datetime.now()
-        
-        # Hitung sudut untuk jarum jam, menit, dan detik
-        second_angle = math.radians(now.second * 6 - 90)
-        minute_angle = math.radians(now.minute * 6 - 90)
-        hour_angle = math.radians((now.hour % 12) * 30 + now.minute * 0.5 - 90)
-        
-        # Hapus jarum lama
-        self.delete("hour_hand")
-        self.delete("minute_hand")
-        self.delete("second_hand")
-        
-        # Gambar jarum jam
-        hour_x = self.center_x + self.radius * 0.5 * math.cos(hour_angle)
-        hour_y = self.center_y + self.radius * 0.5 * math.sin(hour_angle)
-        self.create_line(self.center_x, self.center_y, hour_x, hour_y, width=6, fill='black', tags="hour_hand")
-        
-        # Gambar jarum menit
-        minute_x = self.center_x + self.radius * 0.7 * math.cos(minute_angle)
-        minute_y = self.center_y + self.radius * 0.7 * math.sin(minute_angle)
-        self.create_line(self.center_x, self.center_y, minute_x, minute_y, width=4, fill='black', tags="minute_hand")
-        
-        # Gambar jarum detik
-        second_x = self.center_x + self.radius * 0.8 * math.cos(second_angle)
-        second_y = self.center_y + self.radius * 0.8 * math.sin(second_angle)
-        self.create_line(self.center_x, self.center_y, second_x, second_y, width=2, fill='red', tags="second_hand")
-        
-        # Update setiap detik
-        self.after(1000, self.update_clock)
+    def _on_mousewheel(self, event):
+        """Handle mouse wheel scrolling on Windows"""
+        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
+    def on_close(self):
+        """Tangani penutupan jendela utama dengan benar"""
+        try:
+            # Tampilkan dialog konfirmasi
+            if messagebox.askyesno("Konfirmasi", "Apakah Anda yakin ingin keluar dari aplikasi?"):
+                # Hentikan scheduler jika ada
+                if hasattr(self, 'scheduler') and self.scheduler:
+                    log_info("Menghentikan scheduler...")
+                    self.scheduler.stop()
+                
+                # Hentikan tray icon jika ada
+                if hasattr(self, 'tray_icon') and self.tray_icon:
+                    log_info("Menghentikan tray icon...")
+                    self.tray_icon.stop()
+                
+                # Hentikan audio player
+                if hasattr(self, 'audio_player'):
+                    log_info("Menghentikan audio player...")
+                    self.audio_player.stop_audio()
+                
+                # Log penutupan aplikasi
+                log_info("Aplikasi ditutup oleh pengguna")
+                
+                # Hancurkan jendela dan keluar aplikasi
+                self.root.destroy()
+                sys.exit(0)
+        except Exception as e:
+            log_error(f"Error saat menutup aplikasi: {e}")
+            # Force exit jika terjadi error
+            sys.exit(1)
+
+    def quit_app(self):
+        """Metode alternatif untuk keluar aplikasi"""
+        self.on_close()

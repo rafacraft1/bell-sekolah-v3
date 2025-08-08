@@ -1,159 +1,217 @@
 # gui/components.py
 import tkinter as tk
 from tkinter import ttk
-from datetime import datetime
-import math
 import os
-from constants import DAYS
-from logger import log_error
+import math
+from datetime import datetime
+from constants import DAYS, AUDIO_DIR
 
 class ClockFace(tk.Canvas):
-    def __init__(self, parent, **kwargs):
-        super().__init__(parent, width=100, height=100, bg='white', highlightthickness=0, **kwargs)
-        self.create_oval(5, 5, 95, 95, width=2)
-        self.hands = [
-            self.create_line(50, 50, 50, 20, width=3, fill='black'),  # jam
-            self.create_line(50, 50, 50, 15, width=2, fill='blue'),   # menit
-            self.create_line(50, 50, 50, 10, width=1, fill='red')     # detik
-        ]
-        self.tick()
-
-    def tick(self):
+    def __init__(self, parent, size=150, **kwargs):
+        super().__init__(parent, width=size, height=size, highlightthickness=0, **kwargs)
+        self.size = size
+        self.center = size // 2
+        self.radius = size // 2 - 10
+        
+        # Draw clock face
+        self._draw_clock_face()
+        
+        # Update time every second
+        self._update_time()
+        
+    def _draw_clock_face(self):
+        """Draw the clock face with hour markers"""
+        # Draw outer circle
+        self.create_oval(
+            self.center - self.radius, 
+            self.center - self.radius,
+            self.center + self.radius, 
+            self.center + self.radius,
+            fill="white", 
+            outline="#2c3e50", 
+            width=2
+        )
+        
+        # Draw hour markers
+        for i in range(12):
+            angle = i * 30  # 30 degrees per hour
+            # Convert angle to radians
+            rad = math.radians(angle - 90)  # -90 to start from top
+            
+            # Calculate marker positions
+            if i % 3 == 0:  # Hour markers
+                inner_radius = self.radius - 15
+                width = 3
+            else:  # Minute markers
+                inner_radius = self.radius - 8
+                width = 1
+                
+            x1 = self.center + inner_radius * math.cos(rad)
+            y1 = self.center + inner_radius * math.sin(rad)
+            x2 = self.center + self.radius * math.cos(rad)
+            y2 = self.center + self.radius * math.sin(rad)
+            
+            self.create_line(x1, y1, x2, y2, fill="#2c3e50", width=width)
+        
+        # Draw center dot
+        self.create_oval(
+            self.center - 5, 
+            self.center - 5,
+            self.center + 5, 
+            self.center + 5,
+            fill="#2c3e50"
+        )
+        
+        # Create clock hands
+        self.hour_hand = self.create_line(
+            self.center, self.center,
+            self.center, self.center - self.radius * 0.5,
+            fill="#2c3e50", width=4, capstyle="round"
+        )
+        
+        self.minute_hand = self.create_line(
+            self.center, self.center,
+            self.center, self.center - self.radius * 0.7,
+            fill="#2c3e50", width=3, capstyle="round"
+        )
+        
+        self.second_hand = self.create_line(
+            self.center, self.center,
+            self.center, self.center - self.radius * 0.8,
+            fill="#e74c3c", width=1, capstyle="round"
+        )
+    
+    def _update_time(self):
+        """Update the clock hands to show current time"""
         now = datetime.now()
-        s = now.second
-        m = now.minute + s / 60
-        h = now.hour % 12 + m / 60
-        angle_s = 90 - s * 6
-        angle_m = 90 - m * 6
-        angle_h = 90 - h * 30
-        self._update_hand(self.hands[2], angle_s, 40, 'red')
-        self._update_hand(self.hands[1], angle_m, 35, 'blue')
-        self._update_hand(self.hands[0], angle_h, 25, 'black')
-        self.after(1000, self.tick)
-
-    def _update_hand(self, hand, angle, length, color):
-        x = 50 + length * math.cos(math.radians(angle))
-        y = 50 - length * math.sin(math.radians(angle))
-        self.coords(hand, 50, 50, x, y)
+        
+        # Calculate angles
+        second_angle = (now.second * 6) - 90  # 6 degrees per second
+        minute_angle = (now.minute * 6 + now.second * 0.1) - 90  # 6 degrees per minute
+        hour_angle = (now.hour % 12 * 30 + now.minute * 0.5) - 90  # 30 degrees per hour
+        
+        # Update hand positions
+        self._update_hand(self.second_hand, second_angle, self.radius * 0.8)
+        self._update_hand(self.minute_hand, minute_angle, self.radius * 0.7)
+        self._update_hand(self.hour_hand, hour_angle, self.radius * 0.5)
+        
+        # Schedule next update
+        self.after(1000, self._update_time)
+    
+    def _update_hand(self, hand, angle, length):
+        """Update a clock hand position"""
+        rad = math.radians(angle)
+        x = self.center + length * math.cos(rad)
+        y = self.center + length * math.sin(rad)
+        self.coords(hand, self.center, self.center, x, y)
 
 
 class ScheduleTable(tk.Frame):
     def __init__(self, parent, rows=10, **kwargs):
         super().__init__(parent, **kwargs)
         self.rows = rows
-        self.entries = []
-        self._setup_table()
-
-    def _setup_table(self):
-        # Konfigurasi grid agar responsive
+        self.cells = {}  # Store cell widgets
+        
+        # Create table structure
+        self._create_table()
+        
+    def _create_table(self):
+        """Create the schedule table structure"""
+        # Configure grid columns
         for col in range(len(DAYS)):
-            self.grid_columnconfigure(col, weight=1, uniform="schedule_cols")
+            self.grid_columnconfigure(col, weight=1, uniform="days")
         
+        # Create rows
         for row in range(self.rows):
-            self.grid_rowconfigure(row, weight=1, uniform="schedule_rows")
-        
-        # Grid jadwal dengan styling yang lebih baik
-        for row in range(self.rows):
-            row_entries = []
-            for col in range(len(DAYS)):
-                # Alternate row colors for better readability
-                bg_color = "#f8f9fa" if row % 2 == 0 else "#e9ecef"
-                
-                entry = tk.Entry(
-                    self, 
-                    width=15, 
-                    relief="flat", 
-                    bg=bg_color,
-                    font=("Arial", 9),
-                    highlightthickness=1,
-                    highlightbackground="#dee2e6",
-                    highlightcolor="#adb5bd",
-                    selectbackground="#3498db",
-                    selectforeground="white"
-                )
-                entry.grid(row=row, column=col, sticky="nsew", padx=1, pady=1)
-                row_entries.append(entry)
-            self.entries.append(row_entries)
-
-    def update_font_size(self, base_size):
-        """Update font size untuk semua entries"""
-        for row_entries in self.entries:
-            for entry in row_entries:
-                current_font = entry.cget("font")
-                if isinstance(current_font, tuple):
-                    font_family = current_font[0]
-                    new_font = (font_family, base_size)
-                else:
-                    new_font = ("Arial", base_size)
-                entry.config(font=new_font)
-
-    def get_content_width(self):
-        """Hitung lebar konten tabel"""
-        if not self.entries:
-            return len(DAYS) * 120  # Default width per column
-        
-        # Hitung lebar berdasarkan jumlah kolom dan lebar entry
-        total_width = 0
-        if self.entries[0]:
-            # Gunakan lebar minimum yang wajar per kolom
-            min_col_width = 120  # Minimum lebar per kolom
-            total_width = len(DAYS) * min_col_width
-        
-        return max(total_width, len(DAYS) * 120)  # Minimum 120px per kolom
-
-    def get_content_height(self):
-        """Hitung tinggi konten tabel"""
-        if not self.entries:
-            return self.rows * 30  # Default tinggi per baris
-        
-        # Hitung tinggi berdasarkan jumlah baris
-        row_height = 30  # Tinggi per baris
-        total_height = self.rows * row_height
-        
-        return max(total_height, self.rows * 30)  # Minimum 30px per baris
-
-    def clear(self):
-        """Clear all entries"""
-        for row in self.entries:
-            for entry in row:
-                entry.delete(0, tk.END)
-
-    def update_schedule(self, schedules):
-        """Update schedule display"""
-        try:
-            self.clear()
-            day_map = {day: idx for idx, day in enumerate(DAYS)}
+            self.grid_rowconfigure(row, weight=1)
             
-            for day, day_idx in day_map.items():
-                day_schedules = schedules.get(day, [])
-                for row_idx, (schedule_time, path) in enumerate(day_schedules):
+            # Create cells for each day
+            for col, day in enumerate(DAYS):
+                # Create frame for cell
+                cell_frame = tk.Frame(self, bg="white", highlightbackground="#e0e0e0", highlightthickness=1)
+                cell_frame.grid(row=row, column=col, sticky="nsew", padx=1, pady=1)
+                
+                # Create text widget for content
+                text_widget = tk.Text(
+                    cell_frame, 
+                    height=1, 
+                    width=15, 
+                    bg="white", 
+                    fg="#2c3e50",
+                    font=("Arial", 9),
+                    relief="flat",
+                    highlightthickness=0,
+                    wrap="none"
+                )
+                text_widget.pack(fill="both", expand=True, padx=2, pady=2)
+                
+                # Store reference to the text widget
+                self.cells[(row, col)] = text_widget
+    
+    def update_data(self, schedules):
+        """Update table with schedule data"""
+        # Clear all cells
+        for widget in self.cells.values():
+            widget.delete(1.0, tk.END)
+        
+        # Populate with schedule data
+        for day_idx, day in enumerate(DAYS):
+            if day in schedules:
+                for row_idx, (time_str, audio_path) in enumerate(schedules[day]):
                     if row_idx < self.rows:
-                        filename = os.path.basename(path)
-                        self.entries[row_idx][day_idx].insert(0, f"{schedule_time} - {filename}")
-        except Exception as e:
-            log_error(f"Gagal update schedule table: {e}")
+                        # Get filename from path
+                        filename = os.path.basename(audio_path)
+                        # Format display text
+                        display_text = f"{time_str} - {filename}"
+                        
+                        # Update cell
+                        cell = self.cells.get((row_idx, day_idx))
+                        if cell:
+                            cell.insert(1.0, display_text)
+    
+    def get_cell_count(self):
+        """Get the total number of cells in the table"""
+        return len(self.cells)
 
 
 class StatusBar(tk.Frame):
-    def __init__(self, parent, bg_color="#2c3e50", fg_color="white", **kwargs):
-        super().__init__(parent, **kwargs)
-        self.configure(bg=bg_color)
+    def __init__(self, parent, bg_color, text_color, **kwargs):
+        super().__init__(parent, bg=bg_color, height=25, **kwargs)
+        self.pack_propagate(False)
         
-        self.time_label = tk.Label(
+        # Status label
+        self.status_label = tk.Label(
+            self,
+            text="Ready",
+            bg=bg_color,
+            fg=text_color,
+            font=("Arial", 9),
+            anchor="w",
+            padx=10
+        )
+        self.status_label.pack(side="left", fill="x", expand=True)
+        
+        # Clock label
+        self.clock_label = tk.Label(
             self,
             text="",
-            relief="flat",
-            anchor="e",
-            font=("Courier", 10),
             bg=bg_color,
-            fg=fg_color,
-            padx=15,
-            pady=8
+            fg=text_color,
+            font=("Arial", 9),
+            anchor="e",
+            padx=10
         )
-        self.time_label.pack(side="bottom", fill="x")
-        self.update_time()
-
-    def update_time(self):
-        now = datetime.now()
-        self.time_label.config(text=now.strftime("  %H:%M:%S | %d-%m-%Y"))
-        self.after(1000, self.update_time)
+        self.clock_label.pack(side="right")
+        
+        # Update clock
+        self._update_clock()
+    
+    def update_status(self, message):
+        """Update status message"""
+        self.status_label.config(text=message)
+    
+    def _update_clock(self):
+        """Update clock display"""
+        now = datetime.now().strftime("%H:%M:%S")
+        self.clock_label.config(text=now)
+        self.after(1000, self._update_clock)
